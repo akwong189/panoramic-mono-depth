@@ -52,4 +52,4 @@ def generate_dataframe(filename: str, path: str="./") -> pd.DataFrame:
         img_paths = np.squeeze(img_paths)
         depth_paths = np.squeeze(img_paths)
 
-        return pd.DataFrame({'image': img_paths, 'depth': depth_paths})
+        return {'images': img_paths, 'depth': depth_paths}

@@ -4,24 +4,9 @@ from tensorflow.keras.applications import efficientnet
 from tensorflow.keras.layers import Conv2D, UpSampling2D, MaxPool2D, Dropout, BatchNormalization
 from tensorflow.keras.layers import LeakyReLU, concatenate, Concatenate, Input
 from tensorflow.keras import Model
+from utils import upsampling
 
 def EfficientUNet():
-    def upsampling(input_tensor, n_filters, concat_layer, concat=True):
-        '''
-        Block of Decoder
-        '''
-        # Bilinear 2x upsampling layer
-        x = UpSampling2D(size=(2,2), interpolation='bilinear')(input_tensor)
-        # concatenation with encoder block 
-        if concat:
-            x = concatenate([x, concat_layer])
-        # decreasing the depth filters by half
-        x = Conv2D(filters=n_filters, kernel_size=(3,3), padding='same')(x)
-        x = BatchNormalization()(x)
-        x = Conv2D(filters=n_filters, kernel_size=(3,3), padding='same')(x)
-        x = BatchNormalization()(x)
-        return x
-
     base_model = efficientnet.EfficientNetB0(include_top=False, weights='imagenet', input_shape=(256, 512, 3))
     for layer in base_model.layers:
         layer.trainable = True
@@ -29,7 +14,7 @@ def EfficientUNet():
     inputs = base_model.input
     x = base_model.output
 
-    names = ["block2a_expand_activation", "block3a_expand_activation", "block4a_expand_activation", "block6a_expand_activation"][::-1]
+    names = ["block1a_activation", "block2b_activation", "block3a_activation", "block4a_activation"][::-1]
     bneck = Conv2D(filters=512, kernel_size=(1,1), padding='same')(x)
     x = LeakyReLU(alpha=0.2)(bneck)
     x = upsampling(bneck, 256, base_model.get_layer(names[0]).output)

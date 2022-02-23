@@ -1,4 +1,24 @@
 import tensorflow as tf
+import tensorflow_addons as tfa
+import tensorflow.keras.backend as K
+from tensorflow.keras.layers import Conv2D, UpSampling2D, MaxPool2D, Dropout, BatchNormalization
+from tensorflow.keras.layers import LeakyReLU, concatenate, Concatenate, Input
+
+def upsampling(input_tensor, n_filters, concat_layer, concat=True):
+  '''
+  Block of Decoder
+  '''
+  # Bilinear 2x upsampling layer
+  x = UpSampling2D(size=(2,2), interpolation='bilinear')(input_tensor)
+  # concatenation with encoder block 
+  if concat:
+    x = concatenate([x, concat_layer])
+  # decreasing the depth filters by half
+  x = Conv2D(filters=n_filters, kernel_size=(3,3), padding='same')(x)
+  x = BatchNormalization()(x)
+  x = Conv2D(filters=n_filters, kernel_size=(3,3), padding='same')(x)
+  x = BatchNormalization()(x)
+  return x
 
 def loss_function(y_true, y_pred):
 
