@@ -130,4 +130,5 @@ dmypy.json
 
 *.swp
 
-*.h5
+**/*.h5
+checkpoints/
