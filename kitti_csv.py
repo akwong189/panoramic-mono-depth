@@ -1,12 +1,15 @@
+from time import sleep
 import pandas as pd
 from pathlib import Path, PurePath
 import os
 import argparse
-from pprint import pprint 
+from rich.console import Console
+from rich.progress import track
 
 # /data3/awong/kitti/train/2011_09_26_drive_0001_sync/proj_depth/groundtruth/image_02
 # /data3/awong/kitti_raw/2011_09_26/2011_09_26_drive_0001_sync/image_02/data
 
+console = Console()
 
 def convert_depth_image_path(path):
     p = Path(path).parts
@@ -20,8 +23,9 @@ def convert_depth_image_path(path):
 
 def convert_all_depth_images(paths):
     img_paths = []
-    for path in paths:
-        img_paths.append(convert_depth_image_path(path))
+    for step in track(range(len(paths))):
+        img_paths.append(convert_depth_image_path(paths[step]))
+    console.print(f"RGB image paths created", style="bold blue")
     return img_paths
 
 def get_files(img_dir):
@@ -32,22 +36,28 @@ def get_files(img_dir):
                 img_paths.append(PurePath(path, name).__str__().replace(img_dir, ""))
     return img_paths
             
-def create_csv(filename, image_path, depth_path: str):
-    depth_images = get_files(depth_path)
-    rgb_images = convert_all_depth_images(depth_images)
-    verify_img_exists(image_path, depth_images)
+def create_csv(filename, image_path, depth_path: str, verify=True):
+    with console.status("[bold green]Searching for all depth images...") as status:
+        depth_images = get_files(depth_path)
+        console.log(f"All depth images found")
+        
+    if verify: rgb_images = verify_img_exists(image_path, depth_images)
+    else: rgb_images = convert_all_depth_images(depth_images)
     
     df = pd.DataFrame.from_dict({'images': rgb_images, 'depth': depth_images})
     df.to_csv(filename)
+    console.log(f"{filename} written to disk", style="bold blue")
 
 def verify_img_exists(img_path, depth_images):
-    for d_path in depth_images:
-        path = convert_depth_image_path(d_path)
+    img_paths = []
+    for step in track(range(len(depth_images))):
+        path = convert_depth_image_path(depth_images[step])
         if not os.path.exists(img_path + path):
-            print(f"File not found: {path}")
+            console.log(f"File not found: {path}", style="bold red")
             exit(1)
-        else:
-            print(f"Found file: {path}")
+        img_paths.append(path)
+    console.log(f"RGB images found and verified", style="bold blue")
+    return img_paths
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Generate kitti dataset .csv files for training/validation/test")
