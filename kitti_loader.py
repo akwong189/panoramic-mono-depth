@@ -63,4 +63,4 @@ def load_depth(filename, split="train", path="/data3/awong/kitti/", flip=False, 
     return preprocess_depth(img, flip, shape, rand_shape)
 
 def generate_dataframe(filename):
-    return pd.load_csv(filename, index_col=0)
+    return pd.read_csv(filename, index_col=0)
