@@ -7,7 +7,7 @@ import kitti_loader as kloader
 
 
 class DataGenerator(keras.utils.Sequence):
-    def __init__(self, dataset, batch_size=32, shuffle=True, wrap=0, datatype="pano"):
+    def __init__(self, dataset, batch_size=32, shuffle=True, wrap=0, datatype="pano", shape=(256, 640)):
         self.images = dataset["images"]
         self.depth = dataset["depth"]
         self.batch_size = batch_size
@@ -15,8 +15,7 @@ class DataGenerator(keras.utils.Sequence):
         self.indexes = np.arange(len(self.images))
         self.wrap = wrap
         self.datatype = datatype
-        self.random_shape = (0,0)
-        self.split = split
+        self.shape = shape
 
     def __len__(self):
         return int(np.floor(len(self.images) / self.batch_size))
@@ -30,8 +29,15 @@ class DataGenerator(keras.utils.Sequence):
         images = [self.images[k] for k in indexes]
         depth = [self.depth[k] for k in indexes]
 
-        p_img = self.__preprocess_images(images, flip, shift)
-        p_depth = self.__preprocess_depth(depth, flip, shift)
+        # for kitti
+        max_height = 512 - self.shape[0]
+        max_width = 1392 - self.shape[1]
+
+        random_height = np.random.randint(0, max_height)
+        random_width = np.random.randint(0, max_width)
+
+        p_img = self.__preprocess_images(images, flip, shift, (random_height, random_width))
+        p_depth = self.__preprocess_depth(depth, flip, shift, (random_height, random_width))
 
         return p_img, p_depth
 
@@ -40,7 +46,7 @@ class DataGenerator(keras.utils.Sequence):
         if self.shuffle:
             np.random.shuffle(self.indexes)
 
-    def __preprocess_images(self, images, flip, shift):
+    def __preprocess_images(self, images, flip, shift, random):
         result = []
         for img in images:
             if self.datatype == "nyu":
@@ -48,13 +54,13 @@ class DataGenerator(keras.utils.Sequence):
             elif self.datatype == "pano":
                 image = loader.load_color(img, flip=flip, shift=shift, wrap=self.wrap)
             else:
-                image, self.random_shape = kloader.load_color(img, flip=flip)
+                image = kloader.load_color(img, flip=flip, rand_shape=random)
 
             scaled_img = (image - image.min()) / (image.max() - image.min())
             result.append(scaled_img)
         return np.array(result)
 
-    def __preprocess_depth(self, images, flip, shift):
+    def __preprocess_depth(self, images, flip, shift, random):
         result = []
         for img in images:
             if self.datatype == "nyu":
@@ -62,7 +68,7 @@ class DataGenerator(keras.utils.Sequence):
             elif self.datatype == "pano":
                 image = loader.load_depth(img, flip=flip, shift=shift, wrap=self.wrap)
             else:
-                image = kloader.load_depth(img, flip=flip, split=self.split, rand_shape=self.random_shape)
+                image = kloader.load_depth(img, flip=flip, rand_shape=random)
             scaled_img = (image - image.min()) / (image.max() - image.min())
             result.append(scaled_img)
         return np.array(result)

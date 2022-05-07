@@ -7,6 +7,7 @@ import numpy as np
 import random
 import loader
 import nyu_loader as nyl
+import kitti_loader as kloader
 import data
 from models import efficientnet, mobilenet, optimizedmobilenet, vgg
 import utils
@@ -19,9 +20,9 @@ config = tf.compat.v1.ConfigProto()
 config.gpu_options.allow_growth = True
 sess = tf.compat.v1.InteractiveSession(config=config)
 
-DATASET = "nyu"
+DATASET = "kitti"
 
-if DATASET == "pano":
+if DATASET in ("pano", "kitti"):
     wrap = 64
     shape = (256, 512 + (wrap * 2), 3)
     buffer_size = 1000
@@ -87,6 +88,14 @@ def nyu_labeled():
     return train_generator, test_generator, test_generator
 
 
+def kitti():
+    train = kloader.generate_dataframe("./splits/kitti_train.csv", "train")
+    test = kloader.generate_dataframe("./splits/kitti_test.csv", "val")
+
+    train_generator = data.DataGenerator(train, batch_size=8, shuffle=True, datatype="kitti")
+    test_generator = data.DataGenerator(test, batch_size=16, shuffle=False, datatype="kitti")
+
+    return train_generator, test_generator, test_generator
 
 # TEST CODE
 # import glob
@@ -100,6 +109,8 @@ if DATASET == "pano":
     train_generator, val_generator, test_generator = pano3d()
 elif DATASET == "nyu":
     train_generator, val_generator, test_generator = nyu_labeled()
+elif DATASET == "kitti":
+    train_generator, val_generator, test_generator = kitti()
 
 # model = efficientnet.EfficientUNet()
 # model = mobilenet.MobileNet(shape)
@@ -120,17 +131,9 @@ model.compile(
     optimizer=utils.opt, loss=utils.loss_function, metrics=[utils.accuracy_function]
 )
 
-if DATASET == "pano":
-    history = model.fit(
-        train_generator, validation_data=val_generator, epochs=100, callbacks=callbacks
-    )
-elif DATASET == "nyu":
-    history = model.fit(
-        train_generator,
-        validation_data=val_generator,
-        epochs=100,
-        callbacks=callbacks,
-    )
+history = model.fit(
+    train_generator, validation_data=val_generator, epochs=100, callbacks=callbacks
+)
 
 model.evaluate(test_generator)
-model.save("unet-optimized-nyu3.h5")
+model.save("unet-optimized-kitti1.h5")
