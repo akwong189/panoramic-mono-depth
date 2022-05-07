@@ -3,17 +3,20 @@ from tensorflow import keras
 import numpy as np
 import loader
 import nyu_loader as nyl
+import kitti_loader as kloader
 
 
 class DataGenerator(keras.utils.Sequence):
-    def __init__(self, dataset, batch_size=32, shuffle=True, wrap=0, is_nyu=False):
+    def __init__(self, dataset, batch_size=32, shuffle=True, wrap=0, datatype="pano", split="train"):
         self.images = dataset["images"]
         self.depth = dataset["depth"]
         self.batch_size = batch_size
         self.shuffle = shuffle
         self.indexes = np.arange(len(self.images))
         self.wrap = wrap
-        self.is_nyu = is_nyu
+        self.datatype = datatype
+        self.random_shape = (0,0)
+        self.split = split
 
     def __len__(self):
         return int(np.floor(len(self.images) / self.batch_size))
@@ -40,10 +43,12 @@ class DataGenerator(keras.utils.Sequence):
     def __preprocess_images(self, images, flip, shift):
         result = []
         for img in images:
-            if self.is_nyu:
+            if self.datatype == "nyu":
                 image = nyl.load_color(img, flip=flip)
-            else:
+            elif self.datatype == "pano":
                 image = loader.load_color(img, flip=flip, shift=shift, wrap=self.wrap)
+            else:
+                image, self.random_shape = kloader.load_color(img, flip=flip)
 
             scaled_img = (image - image.min()) / (image.max() - image.min())
             result.append(scaled_img)
@@ -52,10 +57,12 @@ class DataGenerator(keras.utils.Sequence):
     def __preprocess_depth(self, images, flip, shift):
         result = []
         for img in images:
-            if self.is_nyu:
+            if self.datatype == "nyu":
                 image = nyl.load_depth(img, flip=flip)
-            else:
+            elif self.datatype == "pano":
                 image = loader.load_depth(img, flip=flip, shift=shift, wrap=self.wrap)
+            else:
+                image = kloader.load_depth(img, flip=flip, split=self.split, rand_shape=self.random_shape)
             scaled_img = (image - image.min()) / (image.max() - image.min())
             result.append(scaled_img)
         return np.array(result)
