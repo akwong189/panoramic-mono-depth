@@ -7,7 +7,7 @@ import kitti_loader as kloader
 
 
 class DataGenerator(keras.utils.Sequence):
-    def __init__(self, dataset, batch_size=32, shuffle=True, wrap=0, datatype="pano", split="train"):
+    def __init__(self, dataset, batch_size=32, shuffle=True, wrap=0, datatype="pano"):
         self.images = dataset["images"]
         self.depth = dataset["depth"]
         self.batch_size = batch_size
