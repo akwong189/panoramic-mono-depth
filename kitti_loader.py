@@ -1,5 +1,7 @@
 import tensorflow as tf
 import numpy as np
+import pandas as pd
+
 
 # loads kitit rgb images
 def preprocess_color(image, flip=False, shape=None, **kwargs):
@@ -58,5 +60,7 @@ def load_depth_image(filename, **kwargs):
 
 def load_depth(filename, split="train", path="/data3/awong/kitti/", flip=False, shape=(256, 640), rand_shape=(0,0), **kwargs):
     img = load_depth_image(path + f"{split}/" + filename)
-
     return preprocess_depth(img, flip, shape, rand_shape)
+
+def generate_dataframe(filename):
+    return pd.load_csv(filename, index_col=0)
