@@ -85,6 +85,9 @@ def nyu_labeled():
     images, depths = next(iter(train_generator))
     print(images.shape, depths.shape)
 
+    images, depths = next(iter(test_generator))
+    print(images.shape, depths.shape)
+
     return train_generator, test_generator, test_generator
 
 
@@ -92,8 +95,16 @@ def kitti():
     train = kloader.generate_dataframe("./splits/kitti_train.csv", "train")
     test = kloader.generate_dataframe("./splits/kitti_test.csv", "val")
 
-    train_generator = data.DataGenerator(train, batch_size=8, shuffle=True, datatype="kitti")
-    test_generator = data.DataGenerator(test, batch_size=16, shuffle=False, datatype="kitti")
+    train_generator = data.DataGenerator(train, batch_size=32, shuffle=True, datatype="kitti")
+    test_generator = data.DataGenerator(test, batch_size=32, shuffle=False, datatype="kitti")
+
+    print(len(train_generator), len(test_generator))
+    
+    images, depths = next(iter(train_generator))
+    print("train", images.shape, depths.shape)
+
+    images, depths = next(iter(test_generator))
+    print("test", images.shape, depths.shape)
 
     return train_generator, test_generator, test_generator
 
@@ -132,8 +143,8 @@ model.compile(
 )
 
 history = model.fit(
-    train_generator, validation_data=val_generator, epochs=100, callbacks=callbacks
+    train_generator, validation_data=val_generator, epochs=40#, callbacks=callbacks
 )
 
 model.evaluate(test_generator)
-model.save("unet-optimized-kitti1.h5")
+model.save("unet-optimized-kitti3.h5")

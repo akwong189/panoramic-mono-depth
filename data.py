@@ -30,8 +30,8 @@ class DataGenerator(keras.utils.Sequence):
         depth = [self.depth[k] for k in indexes]
 
         # for kitti
-        max_height = 512 - self.shape[0]
-        max_width = 1392 - self.shape[1]
+        max_height = 320 - self.shape[0]
+        max_width = 1150 - self.shape[1]
 
         random_height = np.random.randint(0, max_height)
         random_width = np.random.randint(0, max_width)
