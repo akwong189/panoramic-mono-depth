@@ -1,3 +1,4 @@
+from time import sleep
 import pandas as pd
 import argparse
 from rich.console import Console
@@ -5,6 +6,7 @@ from rich.progress import track
 import cv2
 from pathlib import Path
 import os
+from multiprocessing import Pool
 
 console = Console()
 
@@ -125,48 +127,54 @@ def fill_depth_colorization(imgRgb=None, imgDepthInput=None, alpha=1):
     
 	return output
 
-def perform_conversion(filename: str, depth_path: str, img_path: str):
-    df = pd.read_csv(filename, index_col=0)
+
+depth_path = None
+img_path = None
+
+def perform_conversion(df):
 
     images = []
     depths = []
 
-    for step in track(range(len(df.index))):
-        image = df["images"][step]
-        depth = df["depth"][step]
+    # print(df)
 
-        # print(depth)
-
-        img = cv2.imread(img_path + image)
-        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-
-        d = cv2.imread(depth_path + depth, cv2.IMREAD_GRAYSCALE)
-
-        result = fill_depth_colorization(img, np.squeeze(d)) 
+    # for i in track(range(len(df.index))):
+    for i in range(len(df.index)):
+        image = df["images"][i]
+        depth = df["depth"][i]
 
         new_depth_path = list(Path(depth).parts)
         new_depth_path[-3] = "correctedTruth"
         folder = "/".join(new_depth_path[:-1]) 
         new_depth_path = "/".join(new_depth_path)
 
-        # console.log(path + folder)
+        if os.path.exists(depth_path + new_depth_path):
+            continue
+
         os.makedirs(depth_path + folder, exist_ok=True)
 
-        # console.log(new_depth_path)
+        img = cv2.imread(img_path + image)
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        img = (img - img.min()) / (img.max() - img.min())
 
+        d = cv2.imread(depth_path + depth, cv2.IMREAD_GRAYSCALE)
+        d = (d - d.min()) / (d.max() - d.min())
+
+        result = fill_depth_colorization(img, np.squeeze(d)) 
         cv2.imwrite(new_depth_path, result)
 
         images.append(image)
         depths.append(new_depth_path)
 
-
-    return images, depths
+    return {"images": images, "depth": depths}
 
 def verify(path, depths):
     for step in track(range(len(depths))):
         if not os.path.exists(path + depths[step]):
             console.log(f"File not found: {path + depths[step]}", style="bold red")
             exit(1)
+
+SIZE=5
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Converts image + depth to create contiguous depth images")
@@ -177,8 +185,33 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    img, d = perform_conversion(args.file, args.dpath, args.ipath)
-    verify(args.dpath, d)
+    df = pd.read_csv(args.file, index_col=0)
 
-    df = pd.DataFrame().from_dict({"images": img, "depth": d})
+    l = len(df.index)
+    print(l)
+    parts = l // SIZE
+
+    dfs = []
+    for i in range(SIZE-1):
+        dfs.append(df[parts*i:parts*(i+1)].reset_index(drop=True))
+    dfs.append(df[parts*(SIZE-1):].reset_index(drop=True))    
+
+    print([len(d.index) for d in dfs])
+
+    depth_path = args.dpath
+    img_path = args.ipath
+
+    with Pool(SIZE) as p:
+        results = p.map(perform_conversion, dfs)
+
+    total = {"images": [], "depth": []}
+
+    for r in results:
+        total["images"] += (r["images"])
+        total["depth"] += (r["depth"])
+
+    # verify(args.dpath, d)
+
+    df = pd.DataFrame().from_dict(total)
+    print(df)
     df.to_csv(args.write)
