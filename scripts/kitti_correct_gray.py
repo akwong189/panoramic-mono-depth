@@ -125,7 +125,7 @@ def fill_depth_colorization(imgRgb=None, imgDepthInput=None, alpha=1):
     
 	return output
 
-def perform_conversion(filename: str, path: str):
+def perform_conversion(filename: str, depth_path: str, img_path: str):
     df = pd.read_csv(filename, index_col=0)
 
     images = []
@@ -137,10 +137,10 @@ def perform_conversion(filename: str, path: str):
 
         # print(depth)
 
-        img = cv2.imread(path + image)
+        img = cv2.imread(img_path + image)
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
-        d = cv2.imread(path + depth, cv2.IMREAD_GRAYSCALE)
+        d = cv2.imread(depth_path + depth, cv2.IMREAD_GRAYSCALE)
 
         result = fill_depth_colorization(img, np.squeeze(d)) 
 
@@ -149,8 +149,8 @@ def perform_conversion(filename: str, path: str):
         folder = "/".join(new_depth_path[:-1]) 
         new_depth_path = "/".join(new_depth_path)
 
-        console.log(path + folder)
-        os.makedirs(path + folder, exist_ok=True)
+        # console.log(path + folder)
+        os.makedirs(depth_path + folder, exist_ok=True)
 
         # console.log(new_depth_path)
 
@@ -172,12 +172,13 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Converts image + depth to create contiguous depth images")
     parser.add_argument('file', help="File dataset generated from kitti_csv.py")
     parser.add_argument('write', help="File location to write a new csv")
-    parser.add_argument('path', help="Path where the data is located")
+    parser.add_argument('dpath', help="Path where the depth is located")
+    parser.add_argument("ipath", help="Path to the images")
 
     args = parser.parse_args()
 
-    img, d = perform_conversion(args.file, args.path)
-    verify(args.path, d)
+    img, d = perform_conversion(args.file, args.dpath, args.ipath)
+    verify(args.dpath, d)
 
     df = pd.DataFrame().from_dict({"images": img, "depth": d})
     df.to_csv(args.write)
