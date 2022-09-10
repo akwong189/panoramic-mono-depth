@@ -4,7 +4,9 @@ import numpy as np
 import loader
 import nyu_loader as nyl
 import kitti_loader as kloader
+import diode_loader as dloader
 
+KITTI_SHAPE = (320, 1150)
 
 class DataGenerator(keras.utils.Sequence):
     def __init__(self, dataset, batch_size=32, shuffle=True, wrap=0, datatype="pano", shape=(256, 640)):

@@ -205,6 +205,12 @@ def upsampling(input_tensor, n_filters, concat_layer, concat=True):
 
 
 def loss_function(y_true, y_pred):
+    
+    K1 = 0.01 # 0.01
+    K2 = 0.03 # 0.03
+    _SSIM = 2 # 1
+    _EDGES = 1.5 # 1
+    _DEPTH = 0.2 # 0.1
 
     # Cosine distance loss
     l_depth = K.mean(K.abs(y_pred - y_true), axis=-1)
@@ -212,14 +218,25 @@ def loss_function(y_true, y_pred):
     # edge loss for sharp edges
     dy_true, dx_true = tf.image.image_gradients(y_true)
     dy_pred, dx_pred = tf.image.image_gradients(y_pred)
-    l_edges = K.mean(K.abs(dy_pred - dy_true) + K.abs(dx_pred - dx_true), axis=-1)
-
+    weights_x = tf.exp(tf.reduce_mean(tf.abs(dx_true)))
+    weights_y = tf.exp(tf.reduce_mean(tf.abs(dy_true)))
+    
+    smoothness_x = dx_pred * weights_x
+    smoothness_y = dy_pred * weights_y
+    
+    # l_edges = K.mean(K.abs(dy_pred - dy_true) + K.abs(dx_pred - dx_true), axis=-1)
+    l_edges = tf.reduce_mean(abs(smoothness_x)) + tf.reduce_mean(abs(smoothness_y))
+    
     # structural similarity loss
-    l_ssim = K.clip((1 - tf.image.ssim(y_true, y_pred, 1.0)) * 0.5, 0, 1)
-
-    # weightage
-    w1, w2, w3 = 1, 1, 0.1
-    return (w1 * l_ssim) + (w2 * K.mean(l_edges)) + (w3 * K.mean(l_depth))
+    # l_ssim = K.clip((1 - tf.image.ssim(y_true, y_pred, 1.0)) * 0.5, 0, 1)
+    l_ssim = tf.reduce_mean(
+        1
+        - tf.image.ssim(
+            y_true, y_pred, max_val=640, filter_size=7, k1=K1 ** 2, k2=K2 ** 2
+        )
+    )
+    
+    return (_SSIM * l_ssim) + (_EDGES * K.mean(l_edges)) + (_DEPTH * K.mean(l_depth))
 
 
 # accuracy function
@@ -247,4 +264,5 @@ def polynomial_decay(epoch, lr):
 
 
 # optimizer
-opt = tfa.optimizers.AdamW(learning_rate=0.0001, weight_decay=1e-6, amsgrad=True)
+# opt = tfa.optimizers.AdamW(learning_rate=0.0001, weight_decay=1e-6, amsgrad=True)
+opt = keras.optimizers.Adam(learning_rate=0.0005)

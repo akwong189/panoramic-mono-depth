@@ -8,7 +8,9 @@ import random
 import loader
 import nyu_loader as nyl
 import kitti_loader as kloader
+import diode_loader as dloader
 import data
+import diode as diode_generator
 from models import efficientnet, mobilenet, optimizedmobilenet, vgg
 import utils
 import tensorflow_datasets as tfds
@@ -20,9 +22,9 @@ config = tf.compat.v1.ConfigProto()
 config.gpu_options.allow_growth = True
 sess = tf.compat.v1.InteractiveSession(config=config)
 
-DATASET = "kitti"
+DATASET = "diode"
 
-if DATASET in ("pano", "kitti"):
+if DATASET in ("pano", "kitti", "diode"):
     wrap = 64
     shape = (256, 512 + (wrap * 2), 3)
     buffer_size = 1000
@@ -108,6 +110,23 @@ def kitti():
 
     return train_generator, test_generator, test_generator
 
+def diode():
+    train = dloader.generate_dataframe("./splits/diode_train.csv")
+    test = dloader.generate_dataframe("./splits/diode_val.csv")
+
+    train_generator = diode_generator.DataGenerator(train, batch_size=16, shuffle=True)
+    test_generator = diode_generator.DataGenerator(test, batch_size=32, shuffle=False)
+
+    print(len(train_generator), len(test_generator))
+    
+    images, depths = next(iter(train_generator))
+    print("train", images.shape, depths.shape)
+
+    images, depths = next(iter(test_generator))
+    print("test", images.shape, depths.shape)
+
+    return train_generator, test_generator, test_generator
+
 # TEST CODE
 # import glob
 # d = {"images": glob.glob("/data3/awong/pano/M3D_test/image/*"), "depth": glob.glob("/data3/awong/pano/M3D_test/depth/*")}
@@ -122,7 +141,9 @@ elif DATASET == "nyu":
     train_generator, val_generator, test_generator = nyu_labeled()
 elif DATASET == "kitti":
     train_generator, val_generator, test_generator = kitti()
-
+elif DATASET == "diode":
+    train_generator, val_generator, test_generator = diode()
+    
 # model = efficientnet.EfficientUNet()
 # model = mobilenet.MobileNet(shape)
 model = optimizedmobilenet.OptimizedUNet_Scene(shape)
@@ -134,17 +155,17 @@ early_stop = tf.keras.callbacks.EarlyStopping(
 )
 
 callbacks = [
-    #tf.keras.callbacks.LearningRateScheduler(utils.polynomial_decay, verbose=1),
-    early_stop,
+    tf.keras.callbacks.LearningRateScheduler(utils.polynomial_decay, verbose=1),
+    # early_stop,
 ]
 
 model.compile(
-    optimizer=utils.opt, loss=utils.loss_function, metrics=[utils.accuracy_function]
+    optimizer=utils.opt, loss=utils.loss_function #, metrics=[utils.accuracy_function]
 )
 
 history = model.fit(
-    train_generator, validation_data=val_generator, epochs=40#, callbacks=callbacks
+    train_generator, validation_data=val_generator, epochs=60 #, callbacks=callbacks
 )
 
 model.evaluate(test_generator)
-model.save("unet-optimized-kitti3.h5")
+model.save("unet-optimized-diode7.h5")
