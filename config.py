@@ -41,7 +41,7 @@ class TrainConfig:
 
     def get_model(self):
         if self.model == "efficient":
-            return efficientnet.EfficientUNet()
+            return None #efficientnet.EfficientUNet()
         elif self.model == "mobile":
             return mobilenet.MobileNet(self.shape)
         elif self.model == "opt":
