@@ -192,6 +192,7 @@ parser.add_argument('-p', '--path', help="path to dataset", default="/data3/awon
 args = parser.parse_args()
 
 if __name__ == "__main__":
+    os.environ["OPENCV_IO_ENABLE_OPENEXR"] = f"{args.gpu}"
     config = TrainConfig.gen_config(args)
     # train_generator, val_generator, test_generator = config.get_splits()
     model = config.get_model()

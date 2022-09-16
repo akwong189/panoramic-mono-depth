@@ -16,8 +16,6 @@ from models import efficientnet, mobilenet, optimizedmobilenet, vgg
 NYU_TFDS_LOAD = False
 DATASETS = ["pano", "kitti", "diode", "nyu"]
 
-def set_gpu(gpu_num):
-    os.environ["OPENCV_IO_ENABLE_OPENEXR"] = f"{gpu_num}"
 
 def set_seed(seed):
     os.environ["PYTHONHASHSEED"] = f"{seed}"
@@ -62,7 +60,6 @@ class TrainConfig:
         seed = args.seed
         data_path = args.path
 
-        set_gpu(gpu_num)
         set_seed(seed)
 
         if dataset == "kitti":
