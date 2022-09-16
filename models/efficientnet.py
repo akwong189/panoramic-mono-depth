@@ -1,15 +1,16 @@
 # Model
 import tensorflow as tf
-from tensorflow.keras.applications import efficientnet
-from tensorflow.keras.layers import (
+from tensorflow import keras
+from keras.applications import efficientnet
+from keras.layers import (
     Conv2D,
     UpSampling2D,
     MaxPool2D,
     Dropout,
     BatchNormalization,
 )
-from tensorflow.keras.layers import LeakyReLU, concatenate, Concatenate, Input
-from tensorflow.keras import Model
+from keras.layers import LeakyReLU, concatenate, Concatenate, Input
+from keras import Model
 from utils import upsampling
 
 
