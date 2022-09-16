@@ -1,4 +1,7 @@
 import os
+import argparse
+
+from config import TrainConfig
 
 os.environ["OPENCV_IO_ENABLE_OPENEXR"] = "1"
 
@@ -18,6 +21,7 @@ import tensorflow_datasets as tfds
 # print("Num GPUs Available: ", len(tf.config.list_physical_devices('GPU')))
 # tf.debugging.set_log_device_placement(True)
 
+"""
 config = tf.compat.v1.ConfigProto()
 config.gpu_options.allow_growth = True
 sess = tf.compat.v1.InteractiveSession(config=config)
@@ -169,3 +173,48 @@ history = model.fit(
 
 model.evaluate(test_generator)
 model.save("unet-optimized-diode7.h5")
+"""
+def check_file_exist(arg):
+    if os.path.exists(f"./results/{arg}"):
+        parser.error(f"The file {arg} already exists, please choose a different file name")
+    elif ".h5" not in arg:
+        parser.error(f"File is not an .h5 extension")
+    else:
+        return arg
+
+parser = argparse.ArgumentParser(description="Monocular Panoramic NN Thesis Code")
+parser.add_argument('-d', '--dataset', help="select dataset to train", default="pano", required=True, choices=["pano", "kitti", "diode", "nyu"])
+parser.add_argument('-m', '--model', help="model to train dataset on", default="optimized", required=True, choices=["efficient", "mobile", "opt", "scene", "vgg"])
+parser.add_argument('-o', '--output', help="output .h5 file name to results", required=True, type=check_file_exist)
+parser.add_argument('-g', '--gpu', help="set gpu to train on", type=int, default=1, choices=range(0, 4))
+parser.add_argument('-s', '--seed', help="set seed for training", type=int, default=43)
+parser.add_argument('-p', '--path', help="path to dataset", default="/data3/awong/")
+args = parser.parse_args()
+
+if __name__ == "__main__":
+    config = TrainConfig.gen_config(args)
+    # train_generator, val_generator, test_generator = config.get_splits()
+    model = config.get_model()
+
+    model.summary()
+    """
+    early_stop = tf.keras.callbacks.EarlyStopping(
+        monitor="val_loss", mode="min", patience=10, restore_best_weights=True
+    )
+
+    callbacks = [
+        tf.keras.callbacks.LearningRateScheduler(utils.polynomial_decay, verbose=1),
+        # early_stop,
+    ]
+
+    model.compile(
+        optimizer=utils.opt, loss=utils.loss_function #, metrics=[utils.accuracy_function]
+    )
+
+    history = model.fit(
+        train_generator, validation_data=val_generator, epochs=60 #, callbacks=callbacks
+    )
+
+    model.evaluate(test_generator)
+    model.save("unet-optimized-diode7.h5") 
+    """

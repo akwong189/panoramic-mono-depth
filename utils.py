@@ -1,15 +1,15 @@
 import tensorflow as tf
 import tensorflow_addons as tfa
-import tensorflow.keras.backend as K
 from tensorflow import keras
-from tensorflow.keras.layers import (
+import keras.backend as K
+from keras.layers import (
     Conv2D,
     UpSampling2D,
     MaxPool2D,
     Dropout,
     BatchNormalization,
 )
-from tensorflow.keras.layers import LeakyReLU, concatenate, Concatenate, Input
+from keras.layers import LeakyReLU, concatenate, Concatenate, Input
 
 
 def depthwise_seperable_conv(inputs, nin, nout):
