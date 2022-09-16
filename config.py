@@ -11,7 +11,7 @@ import data
 import diode as diode_generator
 import tensorflow_datasets as tfds
 
-from models import efficientnet, mobilenet, optimizedmobilenet, vgg
+from models import mobilenet, optimizedmobilenet, vgg
 
 NYU_TFDS_LOAD = False
 DATASETS = ["pano", "kitti", "diode", "nyu"]
