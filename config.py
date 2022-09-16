@@ -56,12 +56,12 @@ class TrainConfig:
         dataset = args.dataset
         model = args.model
         out_file = args.output
-        gpu_num = args.gpu
         seed = args.seed
         data_path = args.path
 
         set_seed(seed)
 
+        print(model)
         if dataset == "kitti":
             return KittiConfig(dataset, model, out_file, data_path)
         elif dataset == "pano":
