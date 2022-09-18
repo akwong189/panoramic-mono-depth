@@ -11,7 +11,7 @@ import data
 import diode as diode_generator
 import tensorflow_datasets as tfds
 
-from models import mobilenet, optimizedmobilenet, vgg
+from models import efficientnet, mobilenet, optimizedmobilenet, vgg
 
 NYU_TFDS_LOAD = False
 DATASETS = ["pano", "kitti", "diode", "nyu"]
@@ -41,7 +41,7 @@ class TrainConfig:
 
     def get_model(self):
         if self.model == "efficient":
-            return None #efficientnet.EfficientUNet()
+            return efficientnet.EfficientUNet()
         elif self.model == "mobile":
             return mobilenet.MobileNet(self.shape)
         elif self.model == "opt":
