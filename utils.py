@@ -1,15 +1,6 @@
 import tensorflow as tf
 import tensorflow_addons as tfa
 from tensorflow import keras
-import keras.backend as K
-from keras.layers import (
-    Conv2D,
-    UpSampling2D,
-    MaxPool2D,
-    Dropout,
-    BatchNormalization,
-)
-from keras.layers import LeakyReLU, concatenate, Concatenate, Input
 
 
 def depthwise_seperable_conv(inputs, nin, nout):
@@ -191,16 +182,16 @@ def upsampling(input_tensor, n_filters, concat_layer, concat=True):
     Block of Decoder
     """
     # Bilinear 2x upsampling layer
-    x = UpSampling2D(size=(2, 2), interpolation="bilinear")(input_tensor)
+    x = keras.layers.UpSampling2D(size=(2, 2), interpolation="bilinear")(input_tensor)
     # concatenation with encoder block
     if concat:
-        x = concatenate([x, concat_layer])
+        x = keras.layers.concatenate([x, concat_layer])
 
     # decreasing the depth filters by half
-    x = Conv2D(filters=n_filters, kernel_size=(3, 3), padding="same")(x)
-    x = BatchNormalization()(x)
-    x = Conv2D(filters=n_filters, kernel_size=(3, 3), padding="same")(x)
-    x = BatchNormalization()(x)
+    x = keras.layers.Conv2D(filters=n_filters, kernel_size=(3, 3), padding="same")(x)
+    x = keras.layers.BatchNormalization()(x)
+    x = keras.layers.Conv2D(filters=n_filters, kernel_size=(3, 3), padding="same")(x)
+    x = keras.layers.BatchNormalization()(x)
     return x
 
 
@@ -213,7 +204,7 @@ def loss_function(y_true, y_pred):
     _DEPTH = 0.2  # 0.1
 
     # Cosine distance loss
-    l_depth = K.mean(K.abs(y_pred - y_true), axis=-1)
+    l_depth = keras.backend.K.mean(keras.backend.K.abs(y_pred - y_true), axis=-1)
 
     # edge loss for sharp edges
     dy_true, dx_true = tf.image.image_gradients(y_true)
@@ -236,12 +227,12 @@ def loss_function(y_true, y_pred):
         )
     )
 
-    return (_SSIM * l_ssim) + (_EDGES * K.mean(l_edges)) + (_DEPTH * K.mean(l_depth))
+    return (_SSIM * l_ssim) + (_EDGES * keras.backend.K.mean(l_edges)) + (_DEPTH * keras.backend.K.mean(l_depth))
 
 
 # accuracy function
 def accuracy_function(y_true, y_pred):
-    return K.mean(
+    return keras.backend.K.mean(
         tf.less_equal(
             tf.math.abs(tf.math.subtract(y_true, y_pred)), tf.constant([0.0625])
         )
