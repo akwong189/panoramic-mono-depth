@@ -3,6 +3,7 @@ import os
 import random
 import numpy as np
 import tensorflow as tf
+from tensorflow import keras
 import loader
 import nyu_loader as nyl
 import kitti_loader as kloader
@@ -12,6 +13,8 @@ import diode as diode_generator
 import tensorflow_datasets as tfds
 
 from models import efficientnet, mobilenet, optimizedmobilenet, vgg
+from utils import loss_function, accuracy_function, DownSampling
+from models.TCSVT import DownSampling, UpSampling, Scene_Understanding
 
 NYU_TFDS_LOAD = False
 DATASETS = ["pano", "kitti", "diode", "nyu"]
@@ -25,11 +28,12 @@ def set_seed(seed):
 
 
 class TrainConfig:
-    def __init__(self, dataset, model, output, path):
+    def __init__(self, dataset, model, output, path, load):
         self.dataset = dataset
         self.model = model
         self.output = output
         self.path = path
+        self.load = load
         self.wrap = 64
         self.shape = (256, 512 + (self.wrap * 2), 3)
 
@@ -41,6 +45,17 @@ class TrainConfig:
         raise NotImplemented("Calling from parent class and not child configuration")
 
     def get_model(self):
+        if self.load:
+            custom_func = {
+                "loss_function": loss_function,
+                "accuracy_function": accuracy_function,
+                "DownSampling": DownSampling,
+                "UpSampling": UpSampling,
+                "Scene_Understanding": Scene_Understanding,
+            }
+            return keras.models.load_model(
+                "./networks/unet-optimized-diode7.h5", custom_objects=custom_func
+            )
         if self.model == "efficient":
             return efficientnet.EfficientUNet()
         elif self.model == "mobile":
@@ -59,23 +74,23 @@ class TrainConfig:
         out_file = args.output
         seed = args.seed
         data_path = args.path
+        load = args.load
 
         set_seed(seed)
 
-        print(model)
         if dataset == "kitti":
-            return KittiConfig(dataset, model, out_file, data_path)
+            return KittiConfig(dataset, model, out_file, data_path, load)
         elif dataset == "pano":
-            return PanoConfig(dataset, model, out_file, data_path)
+            return PanoConfig(dataset, model, out_file, data_path, load)
         elif dataset == "nyu":
-            return NYUConfig(dataset, model, out_file, data_path)
+            return NYUConfig(dataset, model, out_file, data_path, load)
         else:
-            return DiodeConfig(dataset, model, out_file, data_path)
+            return DiodeConfig(dataset, model, out_file, data_path, load)
 
 
 class KittiConfig(TrainConfig):
-    def __init__(self, dataset, model, output, path):
-        super(KittiConfig, self).__init__(dataset, model, output, path)
+    def __init__(self, dataset, model, output, path, load):
+        super(KittiConfig, self).__init__(dataset, model, output, path, load)
 
         self.wrap = 64
         self.shape = (256, 512 + (self.wrap * 2), 3)
@@ -104,8 +119,8 @@ class KittiConfig(TrainConfig):
 
 
 class NYUConfig(TrainConfig):
-    def __init__(self, dataset, model, output, path):
-        super(NYUConfig, self).__init__(dataset, model, output, path)
+    def __init__(self, dataset, model, output, path, load):
+        super(NYUConfig, self).__init__(dataset, model, output, path, load)
 
         self.batch_size = 8
         self.val_batch_size = 8
@@ -167,8 +182,8 @@ class NYUConfig(TrainConfig):
 
 
 class DiodeConfig(TrainConfig):
-    def __init__(self, dataset, model, output, path):
-        super(DiodeConfig, self).__init__(dataset, model, output, path)
+    def __init__(self, dataset, model, output, path, load):
+        super(DiodeConfig, self).__init__(dataset, model, output, path, load)
 
         self.wrap = 64
         self.shape = (256, 512 + (self.wrap * 2), 3)
@@ -197,8 +212,8 @@ class DiodeConfig(TrainConfig):
 
 
 class PanoConfig(TrainConfig):
-    def __init__(self, dataset, model, output, path):
-        super(PanoConfig, self).__init__(dataset, model, output, path)
+    def __init__(self, dataset, model, output, path, load):
+        super(PanoConfig, self).__init__(dataset, model, output, path, load)
 
         self.wrap = 64
         self.shape = (256, 512 + (self.wrap * 2), 3)
