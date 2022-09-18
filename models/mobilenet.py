@@ -28,7 +28,9 @@ def MobileNet(shape=(256, 512, 3)):
     x = upsampling(x, 64, base_model.get_layer(names[2]).output)
     x = keras.layers.LeakyReLU(alpha=0.2)(x)
     x = upsampling(x, 32, base_model.layers[0].output)
-    x = keras.layers.Conv2D(filters=1, activation="sigmoid", kernel_size=(3, 3), padding="same")(x)
+    x = keras.layers.Conv2D(
+        filters=1, activation="sigmoid", kernel_size=(3, 3), padding="same"
+    )(x)
 
     model = keras.Model(inputs=inputs, outputs=x)
     return model

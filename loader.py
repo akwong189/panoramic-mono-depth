@@ -219,7 +219,7 @@ def load_color(filename, flip=False, swap=False, shift=0, wrap=0, **kwargs):
 #     return image.numpy()
 
 
-def generate_dataframe(filename: str, path: str = "./"):# -> pd.DataFrame:
+def generate_dataframe(filename: str, path: str = "./"):  # -> pd.DataFrame:
     with open(filename) as file:
         df = pd.json_normalize(safe_load(file.read()))
         img_paths = []
@@ -234,4 +234,3 @@ def generate_dataframe(filename: str, path: str = "./"):# -> pd.DataFrame:
         depth_paths = np.squeeze(img_paths)
 
         return {"images": img_paths, "depth": depth_paths}
-

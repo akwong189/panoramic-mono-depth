@@ -4,10 +4,12 @@ import pandas as pd
 
 
 # loads kitit rgb images
-def preprocess_color(filename, image, flip=False, shape=None, rand_shape=None, **kwargs):
+def preprocess_color(
+    filename, image, flip=False, shape=None, rand_shape=None, **kwargs
+):
     if flip:
         image = tf.image.flip_left_right(image)
-        
+
     if shape:
         orig_shape = image.shape
         random_height, random_width = rand_shape
@@ -27,15 +29,24 @@ def load_color_image(filename, **kwargs):
     image = tf.cast(image, tf.float32)
     return image
 
-def load_color(filename, path="/data3/awong/kitti_raw/", flip=False, shape=(256, 640), rand_shape=(0,0), **kwargs):
+
+def load_color(
+    filename,
+    path="/data3/awong/kitti_raw/",
+    flip=False,
+    shape=(256, 640),
+    rand_shape=(0, 0),
+    **kwargs
+):
     img = load_color_image(path + filename)
     return preprocess_color(filename, img, flip, shape, rand_shape)
 
+
 # loads kitti depth images
-def preprocess_depth(image, flip=False, shape=None, rand_shape=(0,0), **kwargs):
+def preprocess_depth(image, flip=False, shape=None, rand_shape=(0, 0), **kwargs):
     if flip:
         image = tf.image.flip_left_right(image)
-        
+
     if shape:
         # print(image.shape)
         random_height, random_width = rand_shape
@@ -56,9 +67,17 @@ def load_depth_image(filename, **kwargs):
     return image
 
 
-def load_depth(filename, path="/data3/awong/kitti/", flip=False, shape=(256, 640), rand_shape=(0,0), **kwargs):
+def load_depth(
+    filename,
+    path="/data3/awong/kitti/",
+    flip=False,
+    shape=(256, 640),
+    rand_shape=(0, 0),
+    **kwargs
+):
     img = load_depth_image(path + filename)
     return preprocess_depth(img, flip, shape, rand_shape)
+
 
 def generate_dataframe(filename, type):
     df = pd.read_csv(filename, index_col=0)

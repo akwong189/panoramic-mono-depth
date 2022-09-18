@@ -3,8 +3,17 @@ import diode_loader as dloader
 import numpy as np
 import logging
 
+
 class DataGenerator(tf.keras.utils.Sequence):
-    def __init__(self, data, batch_size=32, dim=(768, 1024), out_shape=(256, 640), n_channels=3, shuffle=True):
+    def __init__(
+        self,
+        data,
+        batch_size=32,
+        dim=(768, 1024),
+        out_shape=(256, 640),
+        n_channels=3,
+        shuffle=True,
+    ):
         """
         Initialization
         """
@@ -29,7 +38,7 @@ class DataGenerator(tf.keras.utils.Sequence):
 
         flip = np.random.choice([True, False])
 
-        # randomly take a shape location 
+        # randomly take a shape location
         max_height = self.dim[0] - self.out_shape[0]
         max_width = self.dim[1] - self.out_shape[1]
 
@@ -42,7 +51,9 @@ class DataGenerator(tf.keras.utils.Sequence):
         mask = [self.mask[k] for k in indexes]
 
         p_img = self._preprocess_images(images, flip, (random_height, random_width))
-        p_depth = self._preprocess_depth(depth, mask, flip, (random_height, random_width))
+        p_depth = self._preprocess_depth(
+            depth, mask, flip, (random_height, random_width)
+        )
 
         return p_img, p_depth
 
@@ -63,7 +74,9 @@ class DataGenerator(tf.keras.utils.Sequence):
         result = []
         for i in range(len(depth)):
             # print(depth[i])
-            img = dloader.load_depth(depth[i], mask[i], flip=flip, rand_shape=random_shape)
+            img = dloader.load_depth(
+                depth[i], mask[i], flip=flip, rand_shape=random_shape
+            )
             if img.max() != img.min():
                 img = (img - img.min()) / (img.max() - img.min())
                 assert img.min() == 0 and img.max() == 1
@@ -89,7 +102,6 @@ class DataGenerator(tf.keras.utils.Sequence):
         x = np.empty((self.batch_size, *self.out_shape, self.n_channels))
         y = np.empty((self.batch_size, *self.out_shape, 1))
 
-
         # for kitti
 
         for i, batch_id in enumerate(batch):
@@ -98,7 +110,7 @@ class DataGenerator(tf.keras.utils.Sequence):
                 self.data["depth"][batch_id],
                 self.data["depth_mask"][batch_id],
                 flip,
-                (random_height, random_width)
+                (random_height, random_width),
             )
 
         return x, y

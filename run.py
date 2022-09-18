@@ -174,21 +174,48 @@ history = model.fit(
 model.evaluate(test_generator)
 model.save("unet-optimized-diode7.h5")
 """
+
+
 def check_file_exist(arg):
     if os.path.exists(f"./results/{arg}"):
-        parser.error(f"The file {arg} already exists, please choose a different file name")
+        parser.error(
+            f"The file {arg} already exists, please choose a different file name"
+        )
     elif ".h5" not in arg:
         parser.error(f"File is not an .h5 extension")
     else:
         return arg
 
+
 parser = argparse.ArgumentParser(description="Monocular Panoramic NN Thesis Code")
-parser.add_argument('-d', '--dataset', help="select dataset to train", default="pano", required=True, choices=["pano", "kitti", "diode", "nyu"])
-parser.add_argument('-m', '--model', help="model to train dataset on", default="optimized", required=True, choices=["efficient", "mobile", "opt", "scene", "vgg"])
-parser.add_argument('-o', '--output', help="output .h5 file name to results", required=True, type=check_file_exist)
-parser.add_argument('-g', '--gpu', help="set gpu to train on", type=int, default=1, choices=range(0, 4))
-parser.add_argument('-s', '--seed', help="set seed for training", type=int, default=43)
-parser.add_argument('-p', '--path', help="path to dataset", default="/data3/awong/")
+parser.add_argument(
+    "-d",
+    "--dataset",
+    help="select dataset to train",
+    default="pano",
+    required=True,
+    choices=["pano", "kitti", "diode", "nyu"],
+)
+parser.add_argument(
+    "-m",
+    "--model",
+    help="model to train dataset on",
+    default="optimized",
+    required=True,
+    choices=["efficient", "mobile", "opt", "scene", "vgg"],
+)
+parser.add_argument(
+    "-o",
+    "--output",
+    help="output .h5 file name to results",
+    required=True,
+    type=check_file_exist,
+)
+parser.add_argument(
+    "-g", "--gpu", help="set gpu to train on", type=int, default=1, choices=range(0, 4)
+)
+parser.add_argument("-s", "--seed", help="set seed for training", type=int, default=43)
+parser.add_argument("-p", "--path", help="path to dataset", default="/data3/awong/")
 args = parser.parse_args()
 
 if __name__ == "__main__":

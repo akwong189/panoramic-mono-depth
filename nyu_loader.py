@@ -7,9 +7,7 @@ import pandas as pd
 from yaml import safe_load
 
 
-def preprocess_depth(
-    depth, flip=False, swap=False, shift=0, wrap=0, **kwargs
-):
+def preprocess_depth(depth, flip=False, swap=False, shift=0, wrap=0, **kwargs):
     if shift > 0:
         h, w = depth.shape
 
@@ -52,9 +50,7 @@ def load_depth_image(filename, size=(256, 128), **kwargs):
     return depth
 
 
-def load_depth(
-    filename, flip=False, swap=False, size=(256, 128), shift=0, wrap=0
-):
+def load_depth(filename, flip=False, swap=False, size=(256, 128), shift=0, wrap=0):
     depth = load_depth_image(filename, size)
     return preprocess_depth(depth, flip, swap, shift, wrap)
 
@@ -102,9 +98,11 @@ def load_color_image(filename, **kwargs):
     image = tf.cast(image, tf.float32)
     return image
 
+
 def load_color(filename, flip=False, swap=False, shift=0, wrap=0, **kwargs):
     img = load_color_image(filename)
     return preprocess_color(img, flip, swap, shift, wrap)
+
 
 def generate_nyu_dataframe(filename: str, path: str = "/data3/awong"):
     df = pd.read_csv(filename, header=None)

@@ -8,8 +8,17 @@ import diode_loader as dloader
 
 KITTI_SHAPE = (320, 1150)
 
+
 class DataGenerator(keras.utils.Sequence):
-    def __init__(self, dataset, batch_size=32, shuffle=True, wrap=0, datatype="pano", shape=(256, 640)):
+    def __init__(
+        self,
+        dataset,
+        batch_size=32,
+        shuffle=True,
+        wrap=0,
+        datatype="pano",
+        shape=(256, 640),
+    ):
         self.images = dataset["images"]
         self.depth = dataset["depth"]
         self.batch_size = batch_size
@@ -38,8 +47,12 @@ class DataGenerator(keras.utils.Sequence):
         random_height = np.random.randint(0, max_height)
         random_width = np.random.randint(0, max_width)
 
-        p_img = self.__preprocess_images(images, flip, shift, (random_height, random_width))
-        p_depth = self.__preprocess_depth(depth, flip, shift, (random_height, random_width))
+        p_img = self.__preprocess_images(
+            images, flip, shift, (random_height, random_width)
+        )
+        p_depth = self.__preprocess_depth(
+            depth, flip, shift, (random_height, random_width)
+        )
 
         return p_img, p_depth
 
@@ -74,6 +87,7 @@ class DataGenerator(keras.utils.Sequence):
             scaled_img = (image - image.min()) / (image.max() - image.min())
             result.append(scaled_img)
         return np.array(result)
+
 
 def prepare_nyu(datapoint):
     image = datapoint["image"]

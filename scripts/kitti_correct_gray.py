@@ -15,13 +15,16 @@ import numpy as np
 from scipy.sparse.linalg import spsolve
 from PIL import Image
 
+
 def load_color_image(filename, **kwargs):
     img = cv2.imread(filename)
     return img
 
+
 def load_depth_image(filename, **kwargs):
     depth = cv2.imread(filename, cv2.IMREAD_GRAYSCALE)
     return depth
+
 
 console = Console()
 
@@ -31,7 +34,7 @@ console = Console()
 # Python port of depth filling code from NYU toolbox
 # Speed needs to be improved
 #
-# Uses 'pypardiso' solver 
+# Uses 'pypardiso' solver
 #
 #
 # fill_depth_colorization.m
@@ -87,7 +90,7 @@ def fill_depth_colorization(imgRgb=None, imgDepthInput=None, alpha=1):
 
             curVal = grayImg[i, j]
             gvals[nWin] = curVal
-            c_var = np.mean((gvals[:nWin + 1] - np.mean(gvals[:nWin+ 1])) ** 2)
+            c_var = np.mean((gvals[: nWin + 1] - np.mean(gvals[: nWin + 1])) ** 2)
 
             csig = c_var * 0.6
             mgv = np.min((gvals[:nWin] - curVal) ** 2)
@@ -97,9 +100,9 @@ def fill_depth_colorization(imgRgb=None, imgDepthInput=None, alpha=1):
             if csig < 2e-06:
                 csig = 2e-06
 
-            gvals[:nWin] = np.exp(-(gvals[:nWin] - curVal) ** 2 / csig)
+            gvals[:nWin] = np.exp(-((gvals[:nWin] - curVal) ** 2) / csig)
             gvals[:nWin] = gvals[:nWin] / sum(gvals[:nWin])
-            vals[len_ - nWin:len_] = -gvals[:nWin]
+            vals[len_ - nWin : len_] = -gvals[:nWin]
 
             # Now the self-reference (along the diagonal).
             rows[len_] = absImgNdx
@@ -120,25 +123,27 @@ def fill_depth_colorization(imgRgb=None, imgDepthInput=None, alpha=1):
     G = scipy.sparse.csr_matrix((vals, (rows, cols)), (numPix, numPix))
 
     A = A + G
-    b = np.multiply(vals.reshape(numPix), imgDepth.flatten('F'))
+    b = np.multiply(vals.reshape(numPix), imgDepth.flatten("F"))
 
-    #print ('Solving system..')
+    # print ('Solving system..')
 
     new_vals = spsolve(A, b)
-    new_vals = np.reshape(new_vals, (H, W), 'F')
+    new_vals = np.reshape(new_vals, (H, W), "F")
 
-    #print ('Done.')
+    # print ('Done.')
 
     denoisedDepthImg = new_vals * maxImgAbsDepth
 
-    output = denoisedDepthImg.reshape((H, W)).astype('float32')
+    output = denoisedDepthImg.reshape((H, W)).astype("float32")
 
-    output = np.multiply(output, (1-knownValMask)) + imgDepthInput
+    output = np.multiply(output, (1 - knownValMask)) + imgDepthInput
 
     return output
 
+
 depth_path = None
 img_path = None
+
 
 def perform_conversion(df):
 
@@ -160,11 +165,11 @@ def perform_conversion(df):
 
         if os.path.exists(depth_path + new_depth_path):
             print(f"skipping - {new_depth_path} | {time.time() - start}s")
-               
+
             images.append(image)
             depths.append(new_depth_path)
             continue
-            
+
         os.makedirs(depth_path + folder, exist_ok=True)
 
         img = load_color_image(img_path + image)
@@ -174,7 +179,7 @@ def perform_conversion(df):
         d = (d - d.min()) / (d.max() - d.min())
 
         result = fill_depth_colorization(img, np.squeeze(d))
-        assert cv2.imwrite(depth_path + new_depth_path, result*255)
+        assert cv2.imwrite(depth_path + new_depth_path, result * 255)
 
         images.append(image)
         depths.append(new_depth_path)
@@ -182,19 +187,23 @@ def perform_conversion(df):
 
     return {"images": images, "depth": depths}
 
+
 def verify(path, depths):
     for step in track(range(len(depths))):
         if not os.path.exists(path + depths[step]):
             console.log(f"File not found: {path + depths[step]}", style="bold red")
             exit(1)
 
-SIZE=15
+
+SIZE = 15
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Converts image + depth to create contiguous depth images")
-    parser.add_argument('file', help="File dataset generated from kitti_csv.py")
-    parser.add_argument('write', help="File location to write a new csv")
-    parser.add_argument('dpath', help="Path where the depth is located")
+    parser = argparse.ArgumentParser(
+        description="Converts image + depth to create contiguous depth images"
+    )
+    parser.add_argument("file", help="File dataset generated from kitti_csv.py")
+    parser.add_argument("write", help="File location to write a new csv")
+    parser.add_argument("dpath", help="Path where the depth is located")
     parser.add_argument("ipath", help="Path to the images")
 
     args = parser.parse_args()
@@ -206,9 +215,9 @@ if __name__ == "__main__":
     parts = l // SIZE
 
     dfs = []
-    for i in range(SIZE-1):
-        dfs.append(df[parts*i:parts*(i+1)].reset_index(drop=True))
-    dfs.append(df[parts*(SIZE-1):].reset_index(drop=True))
+    for i in range(SIZE - 1):
+        dfs.append(df[parts * i : parts * (i + 1)].reset_index(drop=True))
+    dfs.append(df[parts * (SIZE - 1) :].reset_index(drop=True))
 
     print([len(d.index) for d in dfs])
 
@@ -221,8 +230,8 @@ if __name__ == "__main__":
     total = {"images": [], "depth": []}
 
     for r in results:
-        total["images"] += (r["images"])
-        total["depth"] += (r["depth"])
+        total["images"] += r["images"]
+        total["depth"] += r["depth"]
 
     # verify(args.dpath, d)
 
