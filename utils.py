@@ -204,7 +204,7 @@ def loss_function(y_true, y_pred):
     _DEPTH = 0.2  # 0.1
 
     # Cosine distance loss
-    l_depth = keras.backend.K.mean(keras.backend.K.abs(y_pred - y_true), axis=-1)
+    l_depth = keras.backend.mean(keras.backend.abs(y_pred - y_true), axis=-1)
 
     # edge loss for sharp edges
     dy_true, dx_true = tf.image.image_gradients(y_true)
@@ -227,12 +227,12 @@ def loss_function(y_true, y_pred):
         )
     )
 
-    return (_SSIM * l_ssim) + (_EDGES * keras.backend.K.mean(l_edges)) + (_DEPTH * keras.backend.K.mean(l_depth))
+    return (_SSIM * l_ssim) + (_EDGES * keras.backend.mean(l_edges)) + (_DEPTH * keras.backend.mean(l_depth))
 
 
 # accuracy function
 def accuracy_function(y_true, y_pred):
-    return keras.backend.K.mean(
+    return keras.backend.mean(
         tf.less_equal(
             tf.math.abs(tf.math.subtract(y_true, y_pred)), tf.constant([0.0625])
         )
