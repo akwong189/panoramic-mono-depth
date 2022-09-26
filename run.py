@@ -1,6 +1,6 @@
 import os
 import argparse
-os.environ["OPENCV_IO_ENABLE_OPENEXR"] = 1
+os.environ["OPENCV_IO_ENABLE_OPENEXR"] = "1"
 
 def check_file(arg):
     if os.path.exists(f"./results/{arg}"):
