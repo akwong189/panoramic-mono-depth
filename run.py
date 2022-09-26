@@ -1,9 +1,5 @@
 import os
 import argparse
-from config import TrainConfig
-import tensorflow as tf
-import utils
-
 
 def check_file(arg):
     if os.path.exists(f"./results/{arg}"):
@@ -88,6 +84,11 @@ args = parser.parse_args()
 if __name__ == "__main__":
     if not args.cpu:
         os.environ["OPENCV_IO_ENABLE_OPENEXR"] = f"{args.gpu}"
+
+    from config import TrainConfig
+    import tensorflow as tf
+    import utils
+
     config = TrainConfig.gen_config(args)
     train_generator, val_generator, test_generator = config.get_splits()
     model = config.get_model()
