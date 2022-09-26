@@ -5,6 +5,8 @@ import numpy as np
 import tensorflow as tf
 from tensorflow import keras
 import loader
+from models.shufflenet import shufflenet
+from models.wnet import wnet
 import nyu_loader as nyl
 import kitti_loader as kloader
 import diode_loader as dloader
@@ -13,7 +15,7 @@ import diode as diode_generator
 import tensorflow_datasets as tfds
 
 from models import efficientnet, mobilenet, optimizedmobilenet, vgg
-from utils import loss_function, accuracy_function, DownSampling
+from utils import loss_function, accuracy_function
 from models.TCSVT import DownSampling, UpSampling, Scene_Understanding
 
 NYU_TFDS_LOAD = False
@@ -66,6 +68,10 @@ class TrainConfig:
             return optimizedmobilenet.OptimizedUNet_Scene(self.shape)
         elif self.model == "vgg":
             return vgg.VGG(self.shape)
+        elif self.model == "shuffle":
+            # return shufflenet(self.shape)
+            # return shufflenet(shape=(224, 224, 3))
+            return wnet(self.shape)
 
     @staticmethod
     def gen_config(args):

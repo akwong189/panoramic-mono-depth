@@ -51,7 +51,7 @@ parser.add_argument(
     help="model to train dataset on",
     default="optimized",
     required=True,
-    choices=["efficient", "mobile", "opt", "scene", "vgg"],
+    choices=["efficient", "mobile", "opt", "scene", "vgg", "shuffle"],
 )
 parser.add_argument(
     "-o",
@@ -77,15 +77,24 @@ parser.add_argument(
 parser.add_argument(
     "-lr", "--rate", help="set learning rate", default=0.005, type=float
 )
+parser.add_argument(
+    "--cpu", help="Use CPU instead of GPU", action='store_true'
+)
+parser.add_argument(
+    "--summary", help="Display the model summary", action='store_true'
+)
 args = parser.parse_args()
 
 if __name__ == "__main__":
-    os.environ["OPENCV_IO_ENABLE_OPENEXR"] = f"{args.gpu}"
+    if not args.cpu:
+        os.environ["OPENCV_IO_ENABLE_OPENEXR"] = f"{args.gpu}"
     config = TrainConfig.gen_config(args)
     train_generator, val_generator, test_generator = config.get_splits()
     model = config.get_model()
 
-    model.summary()
+    if args.summary:
+        model.summary()
+        exit(0)
     early_stop = tf.keras.callbacks.EarlyStopping(
         monitor="val_loss", mode="min", patience=10, restore_best_weights=True
     )
@@ -103,7 +112,7 @@ if __name__ == "__main__":
     history = model.fit(
         train_generator,
         validation_data=val_generator,
-        epochs=60,  # , callbacks=callbacks
+        epochs=args.epochs,  # , callbacks=callbacks
     )
 
     model.evaluate(test_generator)
