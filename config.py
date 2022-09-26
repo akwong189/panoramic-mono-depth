@@ -200,7 +200,7 @@ class DiodeConfig(TrainConfig):
         test = dloader.generate_dataframe("./splits/diode_val.csv")
 
         train_generator = diode_generator.DataGenerator(
-            train, batch_size=8, shuffle=True
+            train, batch_size=16, shuffle=True
         )
         test_generator = diode_generator.DataGenerator(
             test, batch_size=32, shuffle=False

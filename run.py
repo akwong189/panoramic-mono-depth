@@ -1,5 +1,6 @@
 import os
 import argparse
+os.environ["OPENCV_IO_ENABLE_OPENEXR"] = 1
 
 def check_file(arg):
     if os.path.exists(f"./results/{arg}"):
@@ -82,8 +83,8 @@ parser.add_argument(
 args = parser.parse_args()
 
 if __name__ == "__main__":
-    if not args.cpu:
-        os.environ["OPENCV_IO_ENABLE_OPENEXR"] = f"{args.gpu}"
+    if not args.cpu: 
+        os.environ["CUDA_VISIBLE_DEVICES"] = f"{args.gpu}"
 
     from config import TrainConfig
     import tensorflow as tf
