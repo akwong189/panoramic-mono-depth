@@ -109,7 +109,7 @@ if __name__ == "__main__":
 
     model.compile(
         optimizer=utils.opt,
-        loss=utils.loss_function,  # , metrics=[utils.accuracy_function]
+        loss=utils.new_loss_function,  # , metrics=[utils.accuracy_function]
     )
 
     history = model.fit(

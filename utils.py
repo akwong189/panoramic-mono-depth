@@ -1,6 +1,8 @@
 import tensorflow as tf
 import tensorflow_addons as tfa
 from tensorflow import keras
+import numpy as np
+import cv2
 
 
 def depthwise_seperable_conv(inputs, nin, nout):
@@ -195,6 +197,7 @@ def upsampling(input_tensor, n_filters, concat_layer, concat=True):
     return x
 
 
+# DenseDepth
 def loss_function(y_true, y_pred):
 
     K1 = 0.01  # 0.01
@@ -228,6 +231,38 @@ def loss_function(y_true, y_pred):
     )
 
     return (_SSIM * l_ssim) + (_EDGES * keras.backend.mean(l_edges)) + (_DEPTH * keras.backend.mean(l_depth))
+
+# based on the results of this paper: https://www.sciencedirect.com/science/article/pii/S2666827021001092
+def berhu_loss(y_true, y_pred, threshold=0.2):
+    bounds = threshold * np.max(np.abs(y_pred - y_true))
+    l1 = np.abs(y_pred - y_true)
+    l2 = (np.square(y_pred - y_true) + (bounds ** 2)) / (2 * bounds)
+    l1_mask = (l1 <= bounds).astype(int)
+    res = l1 * l1_mask + l2 * (l1_mask == 0).astype(int)
+    return np.mean(res)
+
+def ssim_loss(y_true, y_pred, sharpen=True):
+    if sharpen:
+        edge_kernel = np.array([[0, -1, 0], [-1, 5, -1], [0, -1, 0]])
+        y_true = np.expand_dims(cv2.filter2D(y_true[0].numpy(), ddepth=-1, kernel=edge_kernel), 0)
+        y_true = np.expand_dims(y_true, 3)
+    l_ssim = 1 - tf.image.ssim(y_true, y_pred, max_val=640)
+    return l_ssim
+    # return keras.backend.clip(l_ssim * 0.5, 0, 1)
+
+def sobel_loss(y_true, y_pred):
+    sobel_x = np.array([[1, 0, -1], [2, 0, -2], [1, 0, -1]])
+    sobel_y = np.array([[-1, -2, -1], [0, 0, 0], [1, 2, 1]])
+
+    y_true_x = cv2.filter2D(y_true[0].numpy(), ddepth=-1, kernel=sobel_x) 
+    y_true_y = cv2.filter2D(y_true[0].numpy(), ddepth=-1, kernel=sobel_y) 
+    y_pred_x = cv2.filter2D(y_pred[0].numpy(), ddepth=-1, kernel=sobel_x)  
+    y_pred_y = cv2.filter2D(y_pred[0].numpy(), ddepth=-1, kernel=sobel_y) 
+
+    return np.mean(np.abs(y_pred_x - y_true_x) + np.abs(y_pred_y - y_true_y))
+
+def new_loss_function(y_true, y_pred, l1=1, l2=1, l3=1):
+    return l1 * berhu_loss(y_true, y_pred) + l2 * ssim_loss(y_true, y_pred) + l3 * sobel_loss(y_true, y_pred)
 
 
 # accuracy function
