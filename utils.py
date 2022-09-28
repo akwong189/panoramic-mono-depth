@@ -234,18 +234,20 @@ def loss_function(y_true, y_pred):
 
 # based on the results of this paper: https://www.sciencedirect.com/science/article/pii/S2666827021001092
 def berhu_loss(y_true, y_pred, threshold=0.2):
-    bounds = threshold * np.max(np.abs(y_pred - y_true))
-    l1 = np.abs(y_pred - y_true)
-    l2 = (np.square(y_pred - y_true) + (bounds ** 2)) / (2 * bounds)
-    l1_mask = (l1 <= bounds).astype(int)
-    res = l1 * l1_mask + l2 * (l1_mask == 0).astype(int)
-    return np.mean(res)
+    bounds = threshold * keras.backend.max(keras.backend.abs(y_pred - y_true))
+    l1 = keras.backend.abs(y_pred - y_true)
+    l2 = (keras.backend.square(y_pred - y_true) + (bounds ** 2)) / (2 * bounds)
+    l1_mask = tf.cast((l1 <= bounds), tf.float32)
+    res = l1 * l1_mask + l2 * tf.cast(l1_mask == 0, tf.float32)
+    return keras.backend.mean(res)
 
 def ssim_loss(y_true, y_pred, sharpen=True):
     if sharpen:
         edge_kernel = np.array([[0, -1, 0], [-1, 5, -1], [0, -1, 0]])
-        y_true = np.expand_dims(cv2.filter2D(y_true[0].numpy(), ddepth=-1, kernel=edge_kernel), 0)
-        y_true = np.expand_dims(y_true, 3)
+        sharp_img = cv2.filter2D(y_true[0].numpy(), ddepth=-1, kernel=edge_kernel)
+        sharp_img = tf.convert_to_tensor(sharp_img)
+        y_true = tf.expand_dims(sharp_img, 0)
+        y_true = tf.expand_dims(y_true, 3)
     l_ssim = 1 - tf.image.ssim(y_true, y_pred, max_val=640)
     return l_ssim
     # return keras.backend.clip(l_ssim * 0.5, 0, 1)
@@ -259,7 +261,10 @@ def sobel_loss(y_true, y_pred):
     y_pred_x = cv2.filter2D(y_pred[0].numpy(), ddepth=-1, kernel=sobel_x)  
     y_pred_y = cv2.filter2D(y_pred[0].numpy(), ddepth=-1, kernel=sobel_y) 
 
-    return np.mean(np.abs(y_pred_x - y_true_x) + np.abs(y_pred_y - y_true_y))
+    diff_x = tf.convert_to_tensor(np.abs(y_pred_x - y_true_x))
+    diff_y = tf.convert_to_tensor(np.abs(y_pred_y - y_true_y))
+
+    return keras.backend.mean(diff_x + diff_y)
 
 def new_loss_function(y_true, y_pred, l1=1, l2=1, l3=1):
     return l1 * berhu_loss(y_true, y_pred) + l2 * ssim_loss(y_true, y_pred) + l3 * sobel_loss(y_true, y_pred)
