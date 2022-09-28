@@ -243,11 +243,15 @@ def berhu_loss(y_true, y_pred, threshold=0.2):
 
 def ssim_loss(y_true, y_pred, sharpen=True):
     if sharpen:
+        # y_true = tfa.image.sharpness(y_true, 1)
         edge_kernel = np.array([[0, -1, 0], [-1, 5, -1], [0, -1, 0]])
-        sharp_img = cv2.filter2D(y_true[0].numpy(), ddepth=-1, kernel=edge_kernel)
-        sharp_img = tf.convert_to_tensor(sharp_img)
-        y_true = tf.expand_dims(sharp_img, 0)
-        y_true = tf.expand_dims(y_true, 3)
+        edge_kernel = tf.constant(edge_kernel, dtype=tf.float32)
+        # sharp_img = cv2.filter2D(y_true[0], ddepth=-1, kernel=edge_kernel)
+        sharp_img = tf.nn.conv2d(y_true, edge_kernel, strides=[1,1,1,1], padding="SAME")
+        y_true = sharp_img
+        # sharp_img = tf.convert_to_tensor(sharp_img)
+        # y_true = tf.expand_dims(sharp_img, 0)
+        # y_true = tf.expand_dims(y_true, 3)
     l_ssim = 1 - tf.image.ssim(y_true, y_pred, max_val=640)
     return l_ssim
     # return keras.backend.clip(l_ssim * 0.5, 0, 1)
