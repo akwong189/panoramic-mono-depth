@@ -1,3 +1,4 @@
+from re import I
 import tensorflow as tf
 import tensorflow_addons as tfa
 from tensorflow import keras
@@ -245,6 +246,8 @@ def ssim_loss(y_true, y_pred, sharpen=True):
     if sharpen:
         # y_true = tfa.image.sharpness(y_true, 1)
         edge_kernel = np.array([[0, -1, 0], [-1, 5, -1], [0, -1, 0]])
+        edge_kernel = np.expand_dims(edge_kernel, 0)
+        edge_kernel = np.expand_dims(edge_kernel, 3)
         edge_kernel = tf.constant(edge_kernel, dtype=tf.float32)
         # sharp_img = cv2.filter2D(y_true[0], ddepth=-1, kernel=edge_kernel)
         sharp_img = tf.nn.conv2d(y_true, edge_kernel, strides=[1,1,1,1], padding="SAME")
@@ -258,15 +261,23 @@ def ssim_loss(y_true, y_pred, sharpen=True):
 
 def sobel_loss(y_true, y_pred):
     sobel_x = np.array([[1, 0, -1], [2, 0, -2], [1, 0, -1]])
+    sobel_x = np.expand_dims(sobel_x, 0)
+    sobel_x = np.expand_dims(sobel_x, 3)
+    sobel_x = tf.constant(sobel_x, dtype=tf.float32)
+
     sobel_y = np.array([[-1, -2, -1], [0, 0, 0], [1, 2, 1]])
+    sobel_y = np.expand_dims(sobel_y, 0)
+    sobel_y = np.expand_dims(sobel_y, 3)
+    sobel_y = tf.constant(sobel_y, dtype=tf.float32)
 
-    y_true_x = cv2.filter2D(y_true[0].numpy(), ddepth=-1, kernel=sobel_x) 
-    y_true_y = cv2.filter2D(y_true[0].numpy(), ddepth=-1, kernel=sobel_y) 
-    y_pred_x = cv2.filter2D(y_pred[0].numpy(), ddepth=-1, kernel=sobel_x)  
-    y_pred_y = cv2.filter2D(y_pred[0].numpy(), ddepth=-1, kernel=sobel_y) 
 
-    diff_x = tf.convert_to_tensor(np.abs(y_pred_x - y_true_x))
-    diff_y = tf.convert_to_tensor(np.abs(y_pred_y - y_true_y))
+    y_true_x = tf.nn.conv2d(y_true, sobel_x, strides=[1,1,1,1], padding="SAME")
+    y_true_y = tf.nn.conv2d(y_true, sobel_y, strides=[1,1,1,1], padding="SAME")
+    y_pred_x = tf.nn.conv2d(y_pred, sobel_x, strides=[1,1,1,1], padding="SAME")
+    y_pred_y = tf.nn.conv2d(y_pred, sobel_y, strides=[1,1,1,1], padding="SAME")
+
+    diff_x = y_pred_x - y_true_x
+    diff_y = y_pred_y - y_true_y
 
     return keras.backend.mean(diff_x + diff_y)
 
