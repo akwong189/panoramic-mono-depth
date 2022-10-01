@@ -3,7 +3,7 @@ import argparse
 os.environ["OPENCV_IO_ENABLE_OPENEXR"] = "1"
 
 def check_file(arg):
-    if os.path.exists(f"./results/{arg}"):
+    if os.path.exists(arg):
         return 1
     elif ".h5" not in arg:
         return -1
