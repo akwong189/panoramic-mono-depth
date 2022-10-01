@@ -56,9 +56,12 @@ class TrainConfig:
                 "Scene_Understanding": Scene_Understanding,
                 "new_loss_function": new_loss_function
             }
-            return keras.models.load_model(
+            model = keras.models.load_model(
                 self.load, custom_objects=custom_func
             )
+            print("Model loaded properly")
+            return model
+
         if self.model == "efficient":
             return efficientnet.EfficientUNet()
         elif self.model == "mobile":
