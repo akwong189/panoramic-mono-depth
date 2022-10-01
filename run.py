@@ -47,7 +47,6 @@ parser.add_argument(
     "--model",
     help="model to train dataset on",
     default="optimized",
-    required=True,
     choices=["efficient", "mobile", "opt", "scene", "vgg", "shuffle"],
 )
 parser.add_argument(
@@ -83,6 +82,10 @@ parser.add_argument(
 args = parser.parse_args()
 
 if __name__ == "__main__":
+    if args.model is None and args.load is None:
+        print(f"Failed to find model to use!")
+        exit(1)
+
     if not args.cpu: 
         print(f"Setting the GPU to be used to GPU #{args.gpu}")
         os.environ["CUDA_VISIBLE_DEVICES"] = f"{args.gpu}"
