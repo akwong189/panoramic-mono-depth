@@ -86,13 +86,14 @@ if __name__ == "__main__":
         print(f"Failed to find model to use!")
         exit(1)
 
-    if not args.cpu: 
+    if not args.cpu:
         print(f"Setting the GPU to be used to GPU #{args.gpu}")
         os.environ["CUDA_VISIBLE_DEVICES"] = f"{args.gpu}"
 
     from config import TrainConfig
     import tensorflow as tf
     import utils
+    import pickle
 
     config = TrainConfig.gen_config(args)
     train_generator, val_generator, test_generator = config.get_splits()
@@ -110,9 +111,11 @@ if __name__ == "__main__":
         # early_stop,
     ]
 
+    print(f"learning rate set to {args.rate}")
     model.compile(
-        optimizer=utils.opt,
-        loss=utils.new_loss_function,  # , metrics=[utils.accuracy_function]
+        optimizer=tf.keras.optimizers.Adam(learning_rate=args.rate),
+        # loss=utils.new_loss_function,  # , metrics=[utils.accuracy_function]
+        loss=utils.new_new_loss,
     )
 
     history = model.fit(
@@ -120,6 +123,9 @@ if __name__ == "__main__":
         validation_data=val_generator,
         epochs=args.epochs,  # , callbacks=callbacks
     )
+
+    with open(f'./{args.output[:-3]}.history', 'wb') as file_pi:
+        pickle.dump(history.history, file_pi)
 
     model.evaluate(test_generator)
     model.save(args.output)

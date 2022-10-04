@@ -246,7 +246,7 @@ def ssim_loss(y_true, y_pred, sharpen=True):
     if sharpen:
         # y_true = tfa.image.sharpness(y_true, 1)
         edge_kernel = np.array([[0, -1, 0], [-1, 5, -1], [0, -1, 0]])
-        edge_kernel = np.expand_dims(edge_kernel, 0)
+        edge_kernel = np.expand_dims(edge_kernel, 2)
         edge_kernel = np.expand_dims(edge_kernel, 3)
         edge_kernel = tf.constant(edge_kernel, dtype=tf.float32)
         # sharp_img = cv2.filter2D(y_true[0], ddepth=-1, kernel=edge_kernel)
@@ -261,15 +261,19 @@ def ssim_loss(y_true, y_pred, sharpen=True):
 
 def sobel_loss(y_true, y_pred):
     sobel_x = np.array([[1, 0, -1], [2, 0, -2], [1, 0, -1]])
-    sobel_x = np.expand_dims(sobel_x, 0)
+    sobel_x = np.expand_dims(sobel_x, 2)
     sobel_x = np.expand_dims(sobel_x, 3)
     sobel_x = tf.constant(sobel_x, dtype=tf.float32)
 
     sobel_y = np.array([[-1, -2, -1], [0, 0, 0], [1, 2, 1]])
-    sobel_y = np.expand_dims(sobel_y, 0)
+    sobel_y = np.expand_dims(sobel_y, 2)
     sobel_y = np.expand_dims(sobel_y, 3)
     sobel_y = tf.constant(sobel_y, dtype=tf.float32)
 
+    # y_true_x = keras.backend.conv2d(y_true, sobel_x, padding="same", data_format="channels_last")
+    # y_true_y = keras.backend.conv2d(y_true, sobel_y, padding="same", data_format="channels_last")
+    # y_pred_x = keras.backend.conv3d(y_pred, sobel_x, padding="same", dilation_rate=(1,1,1,1), strides=(1,1,1,1))
+    # y_pred_y = keras.backend.conv3d(y_pred, sobel_y, padding="same", dilation_rate=(1,1,1,1), strides=(1,1,1,1))
 
     y_true_x = tf.nn.conv2d(y_true, sobel_x, strides=[1,1,1,1], padding="SAME")
     y_true_y = tf.nn.conv2d(y_true, sobel_y, strides=[1,1,1,1], padding="SAME")
@@ -281,9 +285,42 @@ def sobel_loss(y_true, y_pred):
 
     return keras.backend.mean(diff_x + diff_y)
 
-def new_loss_function(y_true, y_pred, l1=1, l2=1, l3=1):
+def new_loss_function(y_true, y_pred, l1=1.5, l2=0.5, l3=1):
     return l1 * berhu_loss(y_true, y_pred) + l2 * ssim_loss(y_true, y_pred) + l3 * sobel_loss(y_true, y_pred)
 
+def new_new_loss(target, pred, ssim_w=0.85, l1_loss = 0.1, edge_loss=0.9):
+    # Edges
+    dy_true, dx_true = tf.image.image_gradients(target)
+    dy_pred, dx_pred = tf.image.image_gradients(pred)
+    weights_x = tf.exp(tf.reduce_mean(tf.abs(dx_true)))
+    weights_y = tf.exp(tf.reduce_mean(tf.abs(dy_true)))
+
+    # Depth smoothness
+    smoothness_x = dx_pred * weights_x
+    smoothness_y = dy_pred * weights_y
+
+    depth_smoothness_loss = tf.reduce_mean(abs(smoothness_x)) + tf.reduce_mean(
+        abs(smoothness_y)
+    )
+
+    # Structural similarity (SSIM) index
+    ssim_loss = tf.reduce_mean(
+        1
+        - tf.image.ssim(
+            target, pred, max_val=640, filter_size=7, k1=0.01 ** 2, k2=0.03 ** 2
+        )
+    )
+    # Point-wise depth
+    l1_loss = tf.reduce_mean(tf.abs(target - pred))
+
+    loss = (
+        (1.1 * ssim_loss)
+        + (1.3 * depth_smoothness_loss)
+        + (0.15 * berhu_loss(target, pred) )
+        + (0.75 * sobel_loss(target, pred))
+    )
+
+    return loss
 
 # accuracy function
 def accuracy_function(y_true, y_pred):
@@ -311,4 +348,4 @@ def polynomial_decay(epoch, lr):
 
 # optimizer
 # opt = tfa.optimizers.AdamW(learning_rate=0.0001, weight_decay=1e-6, amsgrad=True)
-opt = keras.optimizers.Adam(learning_rate=0.0005)
+opt = keras.optimizers.Adam(learning_rate=0.00001)
