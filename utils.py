@@ -280,8 +280,8 @@ def sobel_loss(y_true, y_pred):
     y_pred_x = tf.nn.conv2d(y_pred, sobel_x, strides=[1,1,1,1], padding="SAME")
     y_pred_y = tf.nn.conv2d(y_pred, sobel_y, strides=[1,1,1,1], padding="SAME")
 
-    diff_x = y_pred_x - y_true_x
-    diff_y = y_pred_y - y_true_y
+    diff_x = tf.math.abs(y_pred_x - y_true_x)
+    diff_y = tf.math.abs(y_pred_y - y_true_y)
 
     return keras.backend.mean(diff_x + diff_y)
 
@@ -307,7 +307,7 @@ def new_new_loss(target, pred, ssim_w=0.85, l1_loss = 0.1, edge_loss=0.9):
     ssim_loss = tf.reduce_mean(
         1
         - tf.image.ssim(
-            target, pred, max_val=640, filter_size=7, k1=0.01 ** 2, k2=0.03 ** 2
+            target, pred, max_val=0.25, filter_size=7, k1=0.01 ** 2, k2=0.03 ** 2
         )
     )
     # Point-wise depth
