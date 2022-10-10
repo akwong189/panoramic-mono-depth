@@ -77,7 +77,7 @@ def load_depth_image(depth_map, mask, **kwargs):
     depth_map = np.clip(depth_map, MIN_VAL, np.log(max_depth, where=max_depth > 0))
     #     depth_map = cv2.resize(depth_map, IMG_SIZE)
     depth_map = np.expand_dims(depth_map, axis=2)
-    depth_map = np.nan_to_num(depth_map, copy=False)
+    depth_map = np.nan_to_num(depth_map, nan=0, posinf=255, neginf=0)
     depth_map = tf.image.convert_image_dtype(depth_map, tf.float32)
     return depth_map
 

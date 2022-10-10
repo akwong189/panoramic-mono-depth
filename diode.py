@@ -47,6 +47,7 @@ class DataGenerator(tf.keras.utils.Sequence):
 
         # Find list of IDs
         images = [self.images[k] for k in indexes]
+        # tf.print(images, summarize=-1)
         depth = [self.depth[k] for k in indexes]
         mask = [self.mask[k] for k in indexes]
 
@@ -54,6 +55,9 @@ class DataGenerator(tf.keras.utils.Sequence):
         p_depth = self._preprocess_depth(
             depth, mask, flip, (random_height, random_width)
         )
+        assert not (np.any(np.isnan(p_depth)) or np.any(np.isinf(p_depth)))
+        assert not (np.any(np.isnan(p_img)) or np.any(np.isinf(p_img)))
+        # tf.print(p_depth[0], summarize=-1)
 
         return p_img, p_depth
 
@@ -66,7 +70,9 @@ class DataGenerator(tf.keras.utils.Sequence):
         result = []
         for img in images:
             image = dloader.load_color(img, flip=flip, rand_shape=random_shape)
+            assert not np.any(np.isnan(image))
             image = (image - image.min()) / (image.max() - image.min())
+            assert image.min() == 0 and image.max() == 1
             result.append(image)
         return np.array(result)
 

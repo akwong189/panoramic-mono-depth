@@ -238,13 +238,13 @@ class PanoConfig(TrainConfig):
         print(len(train["images"]), len(validation["images"]))
 
         train_generator = data.DataGenerator(
-            train, batch_size=8, shuffle=True, wrap=self.wrap
+            train, batch_size=32, shuffle=True, wrap=self.wrap
         )
         val_generator = data.DataGenerator(
-            validation, batch_size=8, shuffle=False, wrap=self.wrap
+            validation, batch_size=32, shuffle=False, wrap=self.wrap
         )
         test_generator = data.DataGenerator(
-            test, batch_size=16, shuffle=False, wrap=self.wrap
+            test, batch_size=32, shuffle=False, wrap=self.wrap
         )
         print(len(train_generator), len(val_generator), len(test_generator))
 

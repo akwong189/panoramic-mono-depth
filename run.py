@@ -99,29 +99,32 @@ if __name__ == "__main__":
     train_generator, val_generator, test_generator = config.get_splits()
     model = config.get_model()
 
+    tf.debugging.enable_check_numerics()
     if args.summary:
         model.summary()
         exit(0)
     early_stop = tf.keras.callbacks.EarlyStopping(
-        monitor="val_loss", mode="min", patience=10, restore_best_weights=True
+        monitor="val_loss", mode="min", patience=15, restore_best_weights=True
     )
 
     callbacks = [
-        tf.keras.callbacks.LearningRateScheduler(utils.polynomial_decay, verbose=1),
-        # early_stop,
+        tf.keras.callbacks.LearningRateScheduler(utils.learning_decay, verbose=1),
+        early_stop,
     ]
 
     print(f"learning rate set to {args.rate}")
     model.compile(
         optimizer=tf.keras.optimizers.Adam(learning_rate=args.rate),
-        # loss=utils.new_loss_function,  # , metrics=[utils.accuracy_function]
+        # loss=utils.new_loss_function,  
+        # metrics=[utils.accuracy_function],
         loss=utils.new_new_loss,
     )
 
     history = model.fit(
         train_generator,
         validation_data=val_generator,
-        epochs=args.epochs,  # , callbacks=callbacks
+        epochs=args.epochs,
+        callbacks=callbacks
     )
 
     with open(f'./{args.output[:-3]}.history', 'wb') as file_pi:
