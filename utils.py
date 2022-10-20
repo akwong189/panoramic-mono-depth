@@ -228,7 +228,7 @@ def loss_function(y_true, y_pred):
     l_ssim = tf.reduce_mean(
         1
         - tf.image.ssim(
-            y_true, y_pred, max_val=640, filter_size=7, k1=K1**2, k2=K2**2
+            y_true, y_pred, max_val=1, filter_size=7, k1=K1**2, k2=K2**2
         )
     )
 
@@ -328,7 +328,7 @@ def replace_nan_inf(losses):
     return losses
 
 
-def new_new_loss(target, pred, ssim_w=0.85, l1_loss = 0.1, edge_loss=0.9, debug=False):
+def new_new_loss(target, pred, ssim_w=1, smooth_w=1, berhu_w=0.75, sobel_w=0.75, debug=False):
     # Edges
     check_image_not_nan(pred, "predicted")
     check_image_not_nan(target, "target")
@@ -362,7 +362,7 @@ def new_new_loss(target, pred, ssim_w=0.85, l1_loss = 0.1, edge_loss=0.9, debug=
     ssim_loss = (
         1
         - tf.image.ssim(
-            target, pred, max_val=1.0, filter_size=8, k1=0.01 ** 2, k2=0.03 ** 2
+            target, pred, max_val=1.0, filter_size=11, k1=0.01, k2=0.03
         )
     )
     # tf.print(ssim_loss, summarize=-1)
@@ -393,10 +393,10 @@ def new_new_loss(target, pred, ssim_w=0.85, l1_loss = 0.1, edge_loss=0.9, debug=
         # tf.print("Sobel is nan or inf", output_stream=sys.stderr)
 
     loss = (
-        (1.31 * ssim_loss)
-        + (1.3 * depth_smoothness_loss)
-        + (0.75 * berhu)
-        # + (0.75 * sobel)
+        (ssim_w * ssim_loss) # 0.95
+        + (smooth_w * depth_smoothness_loss) # 1.1
+        + (berhu_w * berhu) # 0.35
+        + (sobel_w * sobel) # 0.75
     )
     # if tf.math.is_nan(loss) or tf.math.is_inf(loss):
         # tf.print("WARNING LOSS IS NOT VALID")
@@ -440,15 +440,20 @@ def polynomial_decay(epoch, lr):
     return lr
 
 def learning_decay(epoch, lr):
-    if epoch >= 40:
-        return 0.0000001
+    # if epoch >= 80:
+        # return 0.0000001
+    # if epoch >= 25:
+        # return 0.000001
+    # if epoch >= 15:
+        # return 0.00001
+    # if epoch >= 5:
+        # return 0.0001
+    # return 0.001
     if epoch >= 25:
-        return 0.000001
-    if epoch >= 15:
-        return 0.00001
-    if epoch >= 5:
-        return 0.0001
-    return 0.001
+        return 1e-8
+    if epoch >= 10:
+        return 1e-7
+    return 1e-6
 
 # optimizer
 # opt = tfa.optimizers.AdamW(learning_rate=0.0001, weight_decay=1e-6, amsgrad=True)

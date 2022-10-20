@@ -43,17 +43,21 @@ def shufflenet_encoder(input_layer):
         for _ in range(repeats - 1):
             x = shuffle_block(x, out_channel, 3, shuffle_group=2)
         skip_connections.append(x)
-    
+
     x = conv_bn_relu(x, groups[-1][0], 1)
     return x, skip_connections
 
 def skip_connection_understanding(x, output_channels):
+    x = keras.layers.Conv2D(output_channels // 2, kernel_size=3, padding="same")(x)
+    x = keras.layers.BatchNormalization()(x)
+    x = keras.layers.ReLU()(x)
     x = keras.layers.Conv2D(output_channels, kernel_size=3, padding="same")(x)
+    x = keras.layers.BatchNormalization()(x)
     return x
 
 def upsample(x, concat, out_channels, skip_process=True, alpha=0.2):
     if skip_process:
-        concat = skip_connection_understanding(concat, concat.shape[2] // 2)
+        concat = skip_connection_understanding(concat, concat.shape[2])
         concat = keras.layers.LeakyReLU(alpha=alpha)(concat) # leaky ReLU could be slower than using ReLU
     x = keras.layers.LeakyReLU(alpha=alpha)(x)
     x = upsample_custom(x, out_channels, concat)
