@@ -328,7 +328,7 @@ def replace_nan_inf(losses):
     return losses
 
 
-def new_new_loss(target, pred, ssim_w=1, smooth_w=1, berhu_w=0.75, sobel_w=0.75, debug=False):
+def new_new_loss(target, pred, debug=False):
     # Edges
     check_image_not_nan(pred, "predicted")
     check_image_not_nan(target, "target")
@@ -362,7 +362,7 @@ def new_new_loss(target, pred, ssim_w=1, smooth_w=1, berhu_w=0.75, sobel_w=0.75,
     ssim_loss = (
         1
         - tf.image.ssim(
-            target, pred, max_val=1.0, filter_size=11, k1=0.01, k2=0.03
+            target, pred, max_val=1.0, filter_size=11, k1=0.01 ** 2, k2=0.03 ** 2
         )
     )
     # tf.print(ssim_loss, summarize=-1)
@@ -393,10 +393,10 @@ def new_new_loss(target, pred, ssim_w=1, smooth_w=1, berhu_w=0.75, sobel_w=0.75,
         # tf.print("Sobel is nan or inf", output_stream=sys.stderr)
 
     loss = (
-        (ssim_w * ssim_loss) # 0.95
-        + (smooth_w * depth_smoothness_loss) # 1.1
-        + (berhu_w * berhu) # 0.35
-        + (sobel_w * sobel) # 0.75
+        (1.3 * ssim_loss) # 0.95
+        + (1.1 * depth_smoothness_loss) # 1.1
+        + (3.35 * berhu) # 0.35
+        + (3.7 * sobel) # 0.75
     )
     # if tf.math.is_nan(loss) or tf.math.is_inf(loss):
         # tf.print("WARNING LOSS IS NOT VALID")
@@ -449,11 +449,13 @@ def learning_decay(epoch, lr):
     # if epoch >= 5:
         # return 0.0001
     # return 0.001
-    if epoch >= 25:
+    if epoch >= 35:
         return 1e-8
-    if epoch >= 10:
+    if epoch >= 25:
         return 1e-7
-    return 1e-6
+    if epoch >= 10:
+        return 1e-6
+    return 1e-5
 
 # optimizer
 # opt = tfa.optimizers.AdamW(learning_rate=0.0001, weight_decay=1e-6, amsgrad=True)

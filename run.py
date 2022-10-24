@@ -99,7 +99,8 @@ if __name__ == "__main__":
     config = TrainConfig.gen_config(args)
     train_generator, val_generator, test_generator = config.get_splits()
     model = config.get_model()
-    optimizer = tfa.optimizers.AdamW(1e-4, learning_rate=args.rate)
+    # optimizer = tfa.optimizers.AdamW(1e-4, learning_rate=args.rate)
+    optimizer = tf.keras.optimizers.Adam(learning_rate=args.rate)
 
     tf.debugging.enable_check_numerics()
     if args.summary:
