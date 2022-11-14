@@ -6,7 +6,7 @@ import cv2
 IMG_SIZE = (1024, 768)
 MIN_VAL = 0.5
 
-# loads kitit rgb images
+# loads diode rgb images
 def preprocess_color(
     filename, image, flip=False, shape=None, rand_shape=None, **kwargs
 ):

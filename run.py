@@ -92,35 +92,33 @@ if __name__ == "__main__":
 
     from config import TrainConfig
     import tensorflow as tf
-    import tensorflow_addons as tfa
     import utils
     import pickle
 
     config = TrainConfig.gen_config(args)
-    train_generator, val_generator, test_generator = config.get_splits()
     model = config.get_model()
-    # optimizer = tfa.optimizers.AdamW(1e-5, learning_rate=args.rate)
-    optimizer = tf.keras.optimizers.Adam(learning_rate=args.rate)
 
     tf.debugging.enable_check_numerics()
     if args.summary:
         model.summary()
         exit(0)
     tf.keras.backend.clear_session()
+    train_generator, val_generator, test_generator = config.get_splits()
+
+    # set training information
+    optimizer = tf.keras.optimizers.Adam(learning_rate=args.rate)
     early_stop = tf.keras.callbacks.EarlyStopping(
         monitor="val_loss", mode="min", patience=7, restore_best_weights=True
     )
 
     callbacks = [
         tf.keras.callbacks.LearningRateScheduler(utils.learning_decay, verbose=1),
-        # early_stop,
     ]
 
     print(f"learning rate set to {args.rate}")
     model.compile(
-        optimizer=optimizer, # tf.keras.optimizers.Adam(learning_rate=args.rate),
+        optimizer=optimizer,
         # loss=utils.new_loss_function,  
-        # metrics=[utils.SSIM],
         loss=utils.new_new_loss,
     )
 

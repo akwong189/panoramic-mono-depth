@@ -4,14 +4,14 @@ import random
 import numpy as np
 import tensorflow as tf
 from tensorflow import keras
-import loader
+import data.pano_loader as ploader
 from models.shufflenet import shufflenet
 from models.wnet import wnet
-import nyu_loader as nyl
-import kitti_loader as kloader
-import diode_loader as dloader
-import data
-import diode as diode_generator
+import data.nyu_loader as nyl
+import data.kitti_loader as kloader
+import data.diode_loader as dloader
+import data.data as data
+import data.diode as diode_generator
 import tensorflow_datasets as tfds
 
 from models import efficientnet, mobilenet, optimizedmobilenet, vgg
@@ -233,9 +233,9 @@ class PanoConfig(TrainConfig):
     def get_splits(self):
         pano_path = self.path + "pano/M3D_low/"
 
-        train = loader.generate_dataframe("./splits/M3D_v1_train.yaml", pano_path)
-        test = loader.generate_dataframe("./splits/M3D_v1_test.yaml", pano_path)
-        validation = loader.generate_dataframe("./splits/M3D_v1_val.yaml", pano_path)
+        train = ploader.generate_dataframe("./splits/M3D_v1_train.yaml", pano_path)
+        test = ploader.generate_dataframe("./splits/M3D_v1_test.yaml", pano_path)
+        validation = ploader.generate_dataframe("./splits/M3D_v1_val.yaml", pano_path)
         print(len(train["images"]), len(validation["images"]))
 
         train_generator = data.DataGenerator(
