@@ -99,7 +99,7 @@ if __name__ == "__main__":
     config = TrainConfig.gen_config(args)
     train_generator, val_generator, test_generator = config.get_splits()
     model = config.get_model()
-    # optimizer = tfa.optimizers.AdamW(1e-4, learning_rate=args.rate)
+    # optimizer = tfa.optimizers.AdamW(1e-5, learning_rate=args.rate)
     optimizer = tf.keras.optimizers.Adam(learning_rate=args.rate)
 
     tf.debugging.enable_check_numerics()
@@ -108,12 +108,12 @@ if __name__ == "__main__":
         exit(0)
     tf.keras.backend.clear_session()
     early_stop = tf.keras.callbacks.EarlyStopping(
-        monitor="val_loss", mode="min", patience=5, restore_best_weights=True
+        monitor="val_loss", mode="min", patience=7, restore_best_weights=True
     )
 
     callbacks = [
         tf.keras.callbacks.LearningRateScheduler(utils.learning_decay, verbose=1),
-        early_stop,
+        # early_stop,
     ]
 
     print(f"learning rate set to {args.rate}")

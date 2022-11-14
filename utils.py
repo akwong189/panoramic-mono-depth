@@ -330,20 +330,6 @@ def replace_nan_inf(losses):
 
 def new_new_loss(target, pred, debug=False):
     # Edges
-    check_image_not_nan(pred, "predicted")
-    check_image_not_nan(target, "target")
-
-    # pred = tf.math.divide_no_nan(
-    #     tf.math.subtract(
-    #         pred,
-    #         tf.math.reduce_min(pred)
-    #     ),
-    #     tf.math.subtract(
-    #         tf.math.reduce_max(pred),
-    #         tf.math.reduce_min(pred)
-    #     )
-    # )
-
     dy_true, dx_true = tf.image.image_gradients(target)
     dy_pred, dx_pred = tf.image.image_gradients(pred)
     weights_x = tf.exp(tf.reduce_mean(tf.abs(dx_true)))
@@ -356,62 +342,43 @@ def new_new_loss(target, pred, debug=False):
     depth_smoothness_loss = tf.reduce_mean(abs(smoothness_x)) + tf.reduce_mean(
         abs(smoothness_y)
     )
-    # loss_nan_inf("smoothness", depth_smoothness_loss)
+
+
+    # Edges
+    dy_true, dx_true = tf.image.image_gradients(target)
+    dy_pred, dx_pred = tf.image.image_gradients(pred)
+    l_edges = tf.keras.backend.mean(tf.keras.backend.abs(dy_pred - dy_true) + tf.keras.backend.abs(dx_pred - dx_true), axis=-1)
 
     # Structural similarity (SSIM) index
     ssim_loss = (
         1
         - tf.image.ssim(
-            target, pred, max_val=1.0, filter_size=11, k1=0.01 ** 2, k2=0.03 ** 2
+            target, pred, max_val=1.0# , filter_size=11, k1=0.01 ** 2, k2=0.03 ** 2
         )
     )
-    # tf.print(ssim_loss, summarize=-1)
-    if tf.math.reduce_any(tf.math.is_nan(ssim_loss)) or tf.math.reduce_any(tf.math.is_inf(ssim_loss)):
-        tf.print(ssim_loss, summarize=-1)
-        ssim_loss = replace_nan_inf(ssim_loss)
-        tf.print(ssim_loss, summarize=-1)
-    ssim_loss = tf.reduce_mean(ssim_loss)
 
-    # ssim_loss = loss_nan_inf("SSIM", ssim_loss)
-    # if tf.math.is_nan(ssim_loss) or tf.math.is_inf(ssim_loss):
-        # tf.print("SSIM is still NaN or Inf", output_stream=sys.stderr)
-    # ssim_loss = tf.convert_to_tensor(ssim_l, dtype=tf.float32)
+    # ssim_loss = tf.keras.backend.clip((1 - tf.image.ssim(target, pred, 1.0)) * 0.5, 0, 1)
+
+    # if tf.math.reduce_any(tf.math.is_nan(ssim_loss)) or tf.math.reduce_any(tf.math.is_inf(ssim_loss)):
+        # tf.print(ssim_loss, summarize=-1)
+        # ssim_loss = replace_nan_inf(ssim_loss)
+        # tf.print(ssim_loss, summarize=-1)
+    ssim_loss = tf.reduce_mean(ssim_loss)
 
     # Point-wise depth
     l1_loss = tf.reduce_mean(tf.abs(target - pred))
 
     berhu = berhu_loss(target, pred)
-    # loss_nan_inf("smoothness", berhu)
     sobel = sobel_loss(target, pred)
-    # loss_nan_inf("smoothness", sobel)
-
-    # if tf.math.is_nan(depth_smoothness_loss) or tf.math.is_inf(depth_smoothness_loss):
-        # tf.print("Smoothness is nan or inf", output_stream=sys.stderr)
-    # if tf.math.is_nan(berhu) or tf.math.is_inf(berhu):
-        # tf.print("Berhu is nan or inf", output_stream=sys.stderr)
-    # if tf.math.is_nan(sobel) or tf.math.is_inf(berhu):
-        # tf.print("Sobel is nan or inf", output_stream=sys.stderr)
 
     loss = (
-        (1.3 * ssim_loss) # 0.95
-        + (1.1 * depth_smoothness_loss) # 1.1
-        + (3.35 * berhu) # 0.35
-        + (3.7 * sobel) # 0.75
+        (1 * ssim_loss) # 0.95
+        + (1 * l1_loss)
+        + (1 * tf.keras.backend.mean(l_edges))
+        + (1 * depth_smoothness_loss) # 1.1
+        # + (1 * berhu) # 0.35
+        + (1 * sobel) # 0.75
     )
-    # if tf.math.is_nan(loss) or tf.math.is_inf(loss):
-        # tf.print("WARNING LOSS IS NOT VALID")
-    # else:
-        # tf.print(loss)
-
-    if debug or tf.math.is_nan(ssim_loss):
-        keras.backend.print_tensor(pred)
-        keras.backend.print_tensor(tf.math.reduce_min(pred))
-        keras.backend.print_tensor(tf.math.reduce_max(pred))
-        keras.backend.print_tensor(target)
-        keras.backend.print_tensor(tf.math.reduce_min(target))
-        keras.backend.print_tensor(tf.math.reduce_max(target))
-        keras.backend.print_tensor(ssim_loss)
-
 
     return loss
 
@@ -449,13 +416,30 @@ def learning_decay(epoch, lr):
     # if epoch >= 5:
         # return 0.0001
     # return 0.001
-    if epoch >= 35:
-        return 1e-8
-    if epoch >= 25:
-        return 1e-7
-    if epoch >= 10:
-        return 1e-6
-    return 1e-5
+
+    # test 1
+    # if epoch >= 35:
+    #     return 1e-7
+    # if epoch >= 5:
+    #     return 1e-6
+    # return 1e-5
+
+    # test 2
+    # if epoch >= 20:
+    #     return 1e-6
+    # if epoch >= 8:
+    #     return 1e-5
+    # if epoch >= 4:
+    #     return 1e-4
+    # if epoch >= 2:
+    #     return 1e-3
+    # if epoch >= 1:
+    #     return 1e-2
+    # return 1e-1
+
+    if epoch >= 45:
+        return 1e-5
+    return 1e-4
 
 # optimizer
 # opt = tfa.optimizers.AdamW(learning_rate=0.0001, weight_decay=1e-6, amsgrad=True)

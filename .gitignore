@@ -131,7 +131,15 @@ dmypy.json
 *.swp
 
 **/*.h5
+**/*.history
+**/*.txt
+**/*.onnx
+**/*.swo
 checkpoints/
+mobile_scene_skip_loss_1/
+temp/
+tmp_model/
+*.zip
 
 .vscode
 /images/*

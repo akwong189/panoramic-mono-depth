@@ -15,7 +15,7 @@ import diode as diode_generator
 import tensorflow_datasets as tfds
 
 from models import efficientnet, mobilenet, optimizedmobilenet, vgg
-from utils import loss_function, accuracy_function, new_loss_function
+from utils import loss_function, accuracy_function, new_loss_function, new_new_loss
 from models.TCSVT import DownSampling, UpSampling, Scene_Understanding
 
 NYU_TFDS_LOAD = False
@@ -54,7 +54,8 @@ class TrainConfig:
                 "DownSampling": DownSampling,
                 "UpSampling": UpSampling,
                 "Scene_Understanding": Scene_Understanding,
-                "new_loss_function": new_loss_function
+                "new_loss_function": new_loss_function,
+                "new_new_loss": new_new_loss
             }
             model = keras.models.load_model(
                 self.load, custom_objects=custom_func

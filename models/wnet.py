@@ -48,11 +48,12 @@ def shufflenet_encoder(input_layer):
     return x, skip_connections
 
 def skip_connection_understanding(x, output_channels):
-    x = keras.layers.Conv2D(output_channels // 2, kernel_size=3, padding="same")(x)
-    x = keras.layers.BatchNormalization()(x)
-    x = keras.layers.ReLU()(x)
+    # x = keras.layers.Conv2D(output_channels // 2, kernel_size=3, padding="same")(x)
+    # x = keras.layers.BatchNormalization()(x)
+    # x = keras.layers.ReLU()(x)
     x = keras.layers.Conv2D(output_channels, kernel_size=3, padding="same")(x)
-    x = keras.layers.BatchNormalization()(x)
+    # x = keras.layers.BatchNormalization()(x)
+    # x = keras.layers.ReLU()(x)
     return x
 
 def upsample(x, concat, out_channels, skip_process=True, alpha=0.2):
@@ -78,7 +79,7 @@ def wnet(input_shape=(256, 640, 3), w_scene=True, w_skip=True):
 
     # output resulting image
     x = keras.layers.UpSampling2D(size=(2,2), interpolation="bilinear")(x)
-    output = keras.layers.Conv2D(filters=1, activation="sigmoid", kernel_size=(3, 3), padding="same")(x)
+    output = keras.layers.Conv2D(filters=1, activation="sigmoid", kernel_size=(3, 3), padding="same")(x) # can check for sigmoid
 
     model = keras.Model(input_layer, output)
     return model
