@@ -2,6 +2,8 @@ import os
 import argparse
 os.environ["OPENCV_IO_ENABLE_OPENEXR"] = "1"
 
+LOSSES = ["ssim", "l1", "berhu", "sobel", "edges", "smooth"]
+
 def check_file(arg):
     if os.path.exists(arg):
         return 1
@@ -79,6 +81,13 @@ parser.add_argument(
 parser.add_argument(
     "--summary", help="Display the model summary", action='store_true'
 )
+parser.add_argument(
+    "--loss",
+    help="set loss function to use for training",
+    nargs="+",
+    choices=LOSSES,
+    default=["ssim", "l1", "sobel"]
+)
 args = parser.parse_args()
 
 if __name__ == "__main__":
@@ -95,13 +104,15 @@ if __name__ == "__main__":
     import utils
     import pickle
 
+    loss = utils.set_loss_function(args.loss)
     config = TrainConfig.gen_config(args)
-    model = config.get_model()
+    model = config.get_model(loss)
 
     tf.debugging.enable_check_numerics()
     if args.summary:
         model.summary()
         exit(0)
+    print(f"Using loss(es) {args.loss} for training")
     tf.keras.backend.clear_session()
     train_generator, val_generator, test_generator = config.get_splits()
 
@@ -119,7 +130,7 @@ if __name__ == "__main__":
     model.compile(
         optimizer=optimizer,
         # loss=utils.new_loss_function,  
-        loss=utils.new_new_loss,
+        loss=utils.set_loss_function(args.loss),
     )
 
     history = model.fit(

@@ -15,7 +15,7 @@ import data.diode as diode_generator
 import tensorflow_datasets as tfds
 
 from models import efficientnet, mobilenet, optimizedmobilenet, vgg
-from utils import loss_function, accuracy_function, new_loss_function, new_new_loss
+from utils import set_loss_function
 from models.TCSVT import DownSampling, UpSampling, Scene_Understanding
 
 NYU_TFDS_LOAD = False
@@ -27,7 +27,6 @@ def set_seed(seed):
     random.seed(seed)
     np.random.seed(seed)
     tf.random.set_seed(seed)
-
 
 class TrainConfig:
     def __init__(self, dataset, model, output, path, load):
@@ -46,16 +45,16 @@ class TrainConfig:
     def get_splits(self):
         raise NotImplemented("Calling from parent class and not child configuration")
 
-    def get_model(self):
+    def get_model(self, loss_function):
         if self.load:
             custom_func = {
                 "loss_function": loss_function,
-                "accuracy_function": accuracy_function,
+                # "accuracy_function": accuracy_function,
                 "DownSampling": DownSampling,
                 "UpSampling": UpSampling,
                 "Scene_Understanding": Scene_Understanding,
-                "new_loss_function": new_loss_function,
-                "new_new_loss": new_new_loss
+                # "new_loss_function": new_loss_function,
+                # "new_new_loss": new_new_loss
             }
             model = keras.models.load_model(
                 self.load, custom_objects=custom_func
