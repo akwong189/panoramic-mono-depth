@@ -22,7 +22,7 @@ def ssim_loss(y_true, y_pred, sharpen=False):
         sharp_img = tf.nn.conv2d(y_true, edge_kernel, strides=[1,1,1,1], padding="SAME")
         y_true = sharp_img
     l_ssim = 1 - tf.image.ssim(y_true, y_pred, max_val=1.0)
-    return l_ssim
+    return tf.reduce_mean(l_ssim)
 
 def sobel_loss(y_true, y_pred):
     sobel_x = np.array([[1, 0, -1], [2, 0, -2], [1, 0, -1]])
@@ -68,4 +68,4 @@ def depth_smoothness_loss(y_true, y_pred):
     return depth_smoothness_loss
 
 def l1_loss(y_true, y_pred):
-    return tf.reduce_mean(tf.abs(y_true, y_pred))
+    return tf.reduce_mean(tf.abs(y_true - y_pred))
