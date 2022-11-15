@@ -129,8 +129,7 @@ if __name__ == "__main__":
     print(f"learning rate set to {args.rate}")
     model.compile(
         optimizer=optimizer,
-        # loss=utils.new_loss_function,  
-        loss=utils.set_loss_function(args.loss),
+        loss=loss,
     )
 
     history = model.fit(

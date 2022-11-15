@@ -7,8 +7,10 @@ import time
 def run_function(loss):
     i = multiprocessing.current_process()._identity[0]
     name = "mobile_" + loss.replace(",", "_") + ".h5"
+    if os.path.exists(name):
+        return
     print(f"python3 run.py -d pano -m mobile -o {name} --loss {loss} -g {i-1} -e 40 -lr 0.0001")
-    time.sleep(1)
+    time.sleep(0.1)
 
 if __name__ == "__main__":
     losses = ["ssim", "l1", "berhu", "sobel", "edges", "smooth"]
