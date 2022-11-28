@@ -150,24 +150,24 @@ def OptimizedUNet_Scene(input_shape=(256, 512, 3)):
 
     # Up Scaling
     x = base_model.output
-    x = keras.layers.Conv2D(filters=512, kernel_size=(1, 1), padding="same")(x)
+    x = keras.layers.Conv2D(filters=64, kernel_size=(1, 1), padding="same")(x)
 
-    x = Scene_Understanding(512, 256)(x)
+    x = Scene_Understanding(64, 128)(x)
 
     x = keras.layers.LeakyReLU(alpha=0.2)(x)
-    x = UpSampling(x.shape[-1], 256)(
+    x = UpSampling(x.shape[-1], 128)(
         x, concat=base_model.get_layer(layer_names[0]).output
     )
     x = keras.layers.LeakyReLU(alpha=0.2)(x)
-    x = UpSampling(x.shape[-1], 128)(
+    x = UpSampling(x.shape[-1], 64)(
         x, concat=base_model.get_layer(layer_names[1]).output
     )
     x = keras.layers.LeakyReLU(alpha=0.2)(x)
-    x = UpSampling(x.shape[-1], 64)(
+    x = UpSampling(x.shape[-1], 32)(
         x, concat=base_model.get_layer(layer_names[2]).output
     )
     x = keras.layers.LeakyReLU(alpha=0.2)(x)
-    x = UpSampling(x.shape[-1], 32)(x, concat=base_model.layers[0].output)
+    x = UpSampling(x.shape[-1], 16)(x, concat=base_model.layers[0].output)
     output = keras.layers.Conv2D(
         filters=1, activation="sigmoid", kernel_size=(3, 3), padding="same"
     )(x)

@@ -60,8 +60,8 @@ def upsample(x, concat, out_channels, skip_process=True, alpha=0.2):
     if skip_process:
         concat = skip_connection_understanding(concat, out_channels // 4)
         concat = keras.layers.LeakyReLU(alpha=alpha)(concat) # leaky ReLU could be slower than using ReLU
-    x = keras.layers.LeakyReLU(alpha=alpha)(x)
     x = upsample_custom(x, out_channels, concat)
+    x = keras.layers.LeakyReLU(alpha=alpha)(x)
     return x
 
 def wnet(input_shape=(256, 640, 3), w_scene=True, w_skip=True):

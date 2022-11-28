@@ -87,8 +87,9 @@ class DataGenerator(tf.keras.utils.Sequence):
             assert not np.any(np.isnan(img))
             assert not np.any(np.isinf(img))
             # print(img.max(), img.min())
-            img = (img - 0.5) / (300 - 0.5)
-            
+            # img = (img - 0.5) / (300 - 0.5)
+            img = (img - 0.5) / (np.log(300) - 0.5)
+ 
 #             if img.max() != img.min():
 #                 # depth doesn't need to be normalized based on the image, rather by the depth pixels max/min (0 - 255)
 #                 img = (img - img.min()) / (img.max() - img.min())

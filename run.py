@@ -48,8 +48,8 @@ parser.add_argument(
     "-m",
     "--model",
     help="model to train dataset on",
-    default="optimized",
-    choices=["efficient", "mobile", "opt", "scene", "vgg", "shuffle"],
+    default="mobile",
+    choices=["efficient", "mobile", "opt", "scene", "vgg", "shuffle", "mobilev3"],
 )
 parser.add_argument(
     "-o",
@@ -88,6 +88,14 @@ parser.add_argument(
     choices=LOSSES,
     default=["ssim", "l1", "sobel"]
 )
+parser.add_argument(
+    "--verbose",
+    help="set verbosity of training",
+    type=int,
+    metavar="[0-2]",
+    choices=[0, 1, 2],
+    default=2
+)
 args = parser.parse_args()
 
 if __name__ == "__main__":
@@ -123,7 +131,7 @@ if __name__ == "__main__":
     )
 
     callbacks = [
-        tf.keras.callbacks.LearningRateScheduler(utils.learning_decay, verbose=1),
+        # tf.keras.callbacks.LearningRateScheduler(utils.learning_decay, verbose=1),
     ]
 
     print(f"learning rate set to {args.rate}")
@@ -136,7 +144,8 @@ if __name__ == "__main__":
         train_generator,
         validation_data=val_generator,
         epochs=args.epochs,
-        callbacks=callbacks
+        callbacks=callbacks,
+        verbose=args.verbose
     )
 
     with open(f'./{args.output[:-3]}.history', 'wb') as file_pi:

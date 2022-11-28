@@ -14,7 +14,7 @@ import data.data as data
 import data.diode as diode_generator
 import tensorflow_datasets as tfds
 
-from models import efficientnet, mobilenet, optimizedmobilenet, vgg
+from models import efficientnet, mobilenet, optimizedmobilenet, vgg, mobilenetv3
 from utils import set_loss_function
 from models.TCSVT import DownSampling, UpSampling, Scene_Understanding
 
@@ -66,6 +66,8 @@ class TrainConfig:
             return efficientnet.EfficientUNet()
         elif self.model == "mobile":
             return mobilenet.MobileNet(self.shape)
+        elif self.model == "mobilev3":
+            return mobilenetv3.MobileNetv3(self.shape)
         elif self.model == "opt":
             return optimizedmobilenet.OptimizedUNet(self.shape)
         elif self.model == "scene":

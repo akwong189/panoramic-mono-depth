@@ -71,6 +71,7 @@ class DataGenerator(keras.utils.Sequence):
             else:
                 image = kloader.load_color(img, flip=flip, rand_shape=random)
 
+            # result.append(image)
             scaled_img = (image - image.min()) / (image.max() - image.min())
             # scaled_img = image / 255.0
             result.append(scaled_img)
