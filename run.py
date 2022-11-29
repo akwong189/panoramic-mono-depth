@@ -107,7 +107,7 @@ optimize.add_argument(
     "-m", "--model", help=".h5 or .onnx model", type=check_file_exists, required=True
 )
 optimize.add_argument(
-    "-q", "--quantize", help="quantize model"
+    "-q", "--quantize", help="quantize model", action='store_true'
 )
 optimize.add_argument(
     "-l", "--loss",
