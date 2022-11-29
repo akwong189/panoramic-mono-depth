@@ -43,7 +43,7 @@ def optimize_model(model_name, loss_function):
         "Scene_Understanding": Scene_Understanding
     }
     model = keras.models.load_model(model_name, custom_objects=custom_func)
-    output_path = model.name + ".onnx"
+    output_path = model_name[:-3] + ".onnx"
 
     model_proto, _ = tf2onnx.convert.from_keras(model, opset=13, output_path=output_path)
     return output_path
