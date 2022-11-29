@@ -104,7 +104,7 @@ train.add_argument(
 )
 
 optimize.add_argument(
-    "-m", "--model", help=".h5 or .onnx model", type=check_file_not_exists, required=True
+    "-m", "--model", help=".h5 or .onnx model", type=check_file_exists, required=True
 )
 optimize.add_argument(
     "-q", "--quantize", help="quantize model"
@@ -124,7 +124,7 @@ optimize.add_argument(
 )
 
 metrics.add_argument(
-    "-m", "--model", help=".h5 or .onnx model", type=check_file_not_exists, required=True
+    "-m", "--model", help=".h5 or .onnx model", type=check_file_exists, required=True
 )
 metrics.add_argument(
     "--cpu", help="Use CPU instead of GPU", action='store_true'
