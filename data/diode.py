@@ -46,7 +46,6 @@ class DataGenerator(tf.keras.utils.Sequence):
 
         # Find list of IDs
         images = [self.images[k] for k in indexes]
-        # tf.print(images, summarize=-1)
         depth = [self.depth[k] for k in indexes]
         mask = [self.mask[k] for k in indexes]
 
@@ -56,7 +55,6 @@ class DataGenerator(tf.keras.utils.Sequence):
         )
         assert not (np.any(np.isnan(p_depth)) or np.any(np.isinf(p_depth)))
         assert not (np.any(np.isnan(p_img)) or np.any(np.isinf(p_img)))
-        # tf.print(p_depth[0], summarize=-1)
 
         return p_img, p_depth
 
@@ -72,31 +70,19 @@ class DataGenerator(tf.keras.utils.Sequence):
             assert not np.any(np.isnan(image))
             # image = image / 255.0
             image = (image - image.min()) / (image.max() - image.min())
-            # assert image.min() == 0 and image.max() == 1
             result.append(image)
         return np.array(result)
 
     def _preprocess_depth(self, depth, mask, flip, random_shape):
         result = []
         for i in range(len(depth)):
-            # print(depth[i])
             img = dloader.load_depth(
                 depth[i], mask[i], flip=flip, rand_shape=random_shape
             )
             assert not np.any(np.isnan(img))
             assert not np.any(np.isinf(img))
-            # print(img.max(), img.min())
             # img = (img - 0.5) / (300 - 0.5)
             img = (img - 0.5) / (np.log(300) - 0.5)
- 
-#             if img.max() != img.min():
-#                 # depth doesn't need to be normalized based on the image, rather by the depth pixels max/min (0 - 255)
-#                 img = (img - img.min()) / (img.max() - img.min())
-#                 # 
-#                 assert img.min() == 0 and img.max() == 1
-#             elif img.min() == img.max() and img.min() != 0:
-#                 img = img / img.min()
-#                 assert img.min() == img.max() == 1
             result.append(img)
         return np.array(result)
 
