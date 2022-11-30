@@ -2,7 +2,11 @@ import os
 import argparse
 os.environ["OPENCV_IO_ENABLE_OPENEXR"] = "1"
 
+# !!! Set the usable losses and models for training !!!
 LOSSES = ["ssim", "l1", "berhu", "sobel", "edges", "smooth"]
+MODELS = ["efficient", "mobile", "opt", "scene", "vgg", "shuffle", "mobilev3"]
+DATASETS = ["pano", "kitti", "diode", "nyu"]
+# !!! Set the usable losses and models for training !!!
 
 def check_file(arg):
     if os.path.exists(arg):
@@ -48,14 +52,14 @@ train.add_argument(
     help="select dataset to train",
     default="pano",
     required=True,
-    choices=["pano", "kitti", "diode", "nyu"],
+    choices=DATASETS,
 )
 train.add_argument(
     "-m",
     "--model",
     help="model to train dataset on",
     default="mobile",
-    choices=["efficient", "mobile", "opt", "scene", "vgg", "shuffle", "mobilev3"],
+    choices=MODELS,
 )
 train.add_argument(
     "-o",
@@ -135,95 +139,101 @@ metrics.add_argument(
 
 args = parser.parse_args()
 
+def train():
+    if args.model is None and args.load is None:
+        print(f"Failed to find model to use!")
+        exit(1)
+
+    if not args.cpu:
+        print(f"Setting the GPU to be used to GPU #{args.gpu}")
+        os.environ["CUDA_VISIBLE_DEVICES"] = f"{args.gpu}"
+
+    from config import TrainConfig
+    from loss_utils import set_loss_function
+    import tensorflow as tf
+    import pickle
+
+    loss = set_loss_function(args.loss)
+    config = TrainConfig.gen_config(args)
+    model = config.get_model(loss)
+
+    tf.debugging.enable_check_numerics()
+    if args.summary:
+        model.summary()
+        exit(0)
+    print(f"Using loss(es) {args.loss} for training")
+    tf.keras.backend.clear_session()
+    train_generator, val_generator, test_generator = config.get_splits()
+
+    # !!! set training information !!!
+    optimizer = tf.keras.optimizers.Adam(learning_rate=args.rate)
+    early_stop = tf.keras.callbacks.EarlyStopping(
+        monitor="val_loss", mode="min", patience=7, restore_best_weights=True
+    )
+    callbacks = [
+        # tf.keras.callbacks.LearningRateScheduler(utils.learning_decay, verbose=1),
+    ]
+    # !!! set training information !!!
+
+    print(f"learning rate set to {args.rate}")
+    model.compile(
+        optimizer=optimizer,
+        loss=loss,
+    )
+
+    history = model.fit(
+        train_generator,
+        validation_data=val_generator,
+        epochs=args.epochs,
+        callbacks=callbacks,
+        verbose=args.verbose
+    )
+
+    with open(f'./{args.output[:-3]}.history', 'wb') as file_pi:
+        pickle.dump(history.history, file_pi)
+
+    model.evaluate(test_generator)
+    model.save(args.output)
+    print(f"{args.output} is done")
+
+def optimize():
+    if args.model is None:
+        print(f"Failed to find model to use!")
+        exit(1)
+
+    if not args.cpu:
+        print(f"Setting the GPU to be used to GPU #{args.gpu}")
+        os.environ["CUDA_VISIBLE_DEVICES"] = f"{args.gpu}"
+
+    import tensorflow as tf
+    from loss_utils import set_loss_function
+    from optimize import quantize_model, optimize_model
+
+    loss = set_loss_function(args.loss)
+
+    if args.quantize:
+        path = quantize_model(args.model, loss)
+    else:
+        path = optimize_model(args.model, loss)
+    print(f"ONNX model {path} has been created")
+
+def metrics():
+    if args.model is None:
+        print(f"Failed to find model to use!")
+        exit(1)
+
+    if not args.cpu:
+        print(f"Setting the GPU to be used to GPU #{args.gpu}")
+        os.environ["CUDA_VISIBLE_DEVICES"] = f"{args.gpu}"
+
+
+    from metrics import run_metrics
+    run_metrics(args.model, args.cpu)
+
 if __name__ == "__main__":
     if args.cmd == "train":
-        if args.model is None and args.load is None:
-            print(f"Failed to find model to use!")
-            exit(1)
-
-        if not args.cpu:
-            print(f"Setting the GPU to be used to GPU #{args.gpu}")
-            os.environ["CUDA_VISIBLE_DEVICES"] = f"{args.gpu}"
-
-        from config import TrainConfig
-        import tensorflow as tf
-        import utils
-        import pickle
-
-        loss = utils.set_loss_function(args.loss)
-        config = TrainConfig.gen_config(args)
-        model = config.get_model(loss)
-
-        tf.debugging.enable_check_numerics()
-        if args.summary:
-            model.summary()
-            exit(0)
-        print(f"Using loss(es) {args.loss} for training")
-        tf.keras.backend.clear_session()
-        train_generator, val_generator, test_generator = config.get_splits()
-
-        # set training information
-        optimizer = tf.keras.optimizers.Adam(learning_rate=args.rate)
-        early_stop = tf.keras.callbacks.EarlyStopping(
-            monitor="val_loss", mode="min", patience=7, restore_best_weights=True
-        )
-
-        callbacks = [
-            # tf.keras.callbacks.LearningRateScheduler(utils.learning_decay, verbose=1),
-        ]
-
-        print(f"learning rate set to {args.rate}")
-        model.compile(
-            optimizer=optimizer,
-            loss=loss,
-        )
-
-        history = model.fit(
-            train_generator,
-            validation_data=val_generator,
-            epochs=args.epochs,
-            callbacks=callbacks,
-            verbose=args.verbose
-        )
-
-        with open(f'./{args.output[:-3]}.history', 'wb') as file_pi:
-            pickle.dump(history.history, file_pi)
-
-        model.evaluate(test_generator)
-        model.save(args.output)
-        print(f"{args.output} is done")
-
+        train()
     if args.cmd == "optimize":
-        if args.model is None:
-            print(f"Failed to find model to use!")
-            exit(1)
-
-        if not args.cpu:
-            print(f"Setting the GPU to be used to GPU #{args.gpu}")
-            os.environ["CUDA_VISIBLE_DEVICES"] = f"{args.gpu}"
-
-        import tensorflow as tf
-        import utils
-        from optimize import quantize_model, optimize_model
-
-        loss = utils.set_loss_function(args.loss)
-
-        if args.quantize:
-            path = quantize_model(args.model, loss)
-        else:
-            path = optimize_model(args.model, loss)
-        print(f"ONNX model {path} has been created")
-
+        optimize()
     if args.cmd == "metrics":
-        if args.model is None:
-            print(f"Failed to find model to use!")
-            exit(1)
-
-        if not args.cpu:
-            print(f"Setting the GPU to be used to GPU #{args.gpu}")
-            os.environ["CUDA_VISIBLE_DEVICES"] = f"{args.gpu}"
-
-
-        from metrics import run_metrics
-        run_metrics(args.model, args.cpu)
-        
+        metrics()

@@ -4,7 +4,8 @@ from tensorflow import keras
 import data.pano_loader as loader
 from data import data
 import onnxruntime
-from utils import set_loss_function
+from loss_utils import set_loss_function
+from options import custom_func
 
 # https://github.com/nianticlabs/monodepth2/blob/master/evaluate_depth.py
 def compute_errors(gt, pred):
@@ -100,7 +101,8 @@ def pano_test_generator(pano_path="/data3/awong/pano/M3D_low/", splits="./splits
 def run_metrics_h5(model_path, test_generator):
     keras.backend.clear_session()
     loss = set_loss_function(["ssim"])
-    custom_func = {"new_new_loss": loss, "loss_function": loss}
+    custom_func["new_new_loss"] = loss
+    custom_func["loss_function"] = loss
     model = tf.keras.models.load_model(model_path, custom_objects=custom_func)
     calculate_errors(model, test_generator)
 

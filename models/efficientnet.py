@@ -1,11 +1,11 @@
 # Model
 import tensorflow as tf
 from tensorflow import keras
-from utils import upsampling
+from layers import upsampling
 
 
-def EfficientUNet():
-    base_model = keras.application.efficientnet.EfficientNetB0(
+def EfficientUNet(*kargs):
+    base_model = keras.applications.efficientnet.EfficientNetB0(
         include_top=False, weights="imagenet", input_shape=(256, 512, 3)
     )
     for layer in base_model.layers:

@@ -7,6 +7,7 @@ from onnxruntime.quantization import CalibrationDataReader
 import data.pano_loader as loader
 from data import data
 from onnxruntime.quantization import quantize_static, QuantType, QuantFormat
+from options import custom_func
 
 pano_path = "/data3/awong/pano/M3D_low/"
 train = loader.generate_dataframe("./splits/M3D_v1_train.yaml", pano_path)
@@ -36,12 +37,7 @@ class MobileNetDataReader(CalibrationDataReader):
         self.enum_data = None
 
 def optimize_model(model_name, loss_function):
-    custom_func = {
-        "loss_function": loss_function,
-        "DownSampling": DownSampling,
-        "UpSampling": UpSampling,
-        "Scene_Understanding": Scene_Understanding
-    }
+    custom_func["loss_function"] = loss_function
     model = keras.models.load_model(model_name, custom_objects=custom_func)
     output_path = model_name[:-3] + ".onnx"
 

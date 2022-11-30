@@ -1,7 +1,6 @@
 import tensorflow as tf
 import data.diode_loader as dloader
 import numpy as np
-import logging
 
 
 class DataGenerator(tf.keras.utils.Sequence):

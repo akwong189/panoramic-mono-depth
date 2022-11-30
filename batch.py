@@ -18,6 +18,7 @@ def run_function(loss):
     print(f"{name} is done: took {time.time() - start}s")
     # time.sleep(0.01)
 
+"""Runs a batch for all combinations of loss functions"""
 if __name__ == "__main__":
     losses = ["ssim", "l1", "berhu", "sobel", "edges", "smooth"]
     loss_combinations = []
