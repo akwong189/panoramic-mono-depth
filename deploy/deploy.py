@@ -5,6 +5,12 @@ import time
 from jtop import jtop
 import pickle
 
+MAP_FILE = "./map_full_900.npy"
+ONNX_MODEL = "mobile_diode_pano_ssim_l1_sobel_edges_old_preprocess.onnx"
+STORE_FRAMES = True
+STORE_STATS = True
+GUI = False
+
 def gstreamer_pipeline(
     capture_width=3280,
     capture_height=2464,
@@ -67,7 +73,7 @@ def write_video(name, frames, frame_rate):
 
 def stream(sess):
     i = 0
-    xyd = np.load("./map_full_900.npy")
+    xyd = np.load(MAP_FILE)
     cap = cv2.VideoCapture(gstreamer_pipeline(), cv2.CAP_GSTREAMER)
     output = sess.get_outputs()[0].name
     inputs = sess.get_inputs()[0].name
@@ -93,32 +99,38 @@ def stream(sess):
         if start_time is None:
             start_time = time.time()
 
-        #cv2.imshow("Panoramic Depth", depth)
-        #keyCode = cv2.waitKey(1) & 0xFF
-        # Stop the program on the ESC key
-        #if keyCode == 27:
-        #    break
-        #if keyCode == 99:
-        #    cv2.imwrite(f"./temp/{i}.png", img)
-        #    i+=1
-        #    print("Image Captured")
-        
-        imgs.append(img)
-        depths.append(depth)
-        stats.append(jetson.stats)
+        if GUI:
+            #cv2.imshow("Panoramic Depth", depth)
+            #keyCode = cv2.waitKey(1) & 0xFF
+            # Stop the program on the ESC key
+            #if keyCode == 27:
+            #    break
+            #if keyCode == 99:
+            #    cv2.imwrite(f"./temp/{i}.png", img)
+            #    i+=1
+            #    print("Image Captured")
+            pass
+
         fps.append(1 / (time.time() - start))
+        if STORE_FRAMES:
+            imgs.append(img)
+            depths.append(depth)
+        if STORE_STATS:
+            stats.append(jetson.stats)
         if start_time is not None and time.time() - start_time > 30:
             break
         #print("fps: %0.2f" % (1 / (time.time() - start)))
     
-    avg_framerate = int(np.average(fps))
-    write_video("frames.avi", imgs, avg_framerate)
-    write_video("depths.avi", depths, avg_framerate)
+    if STORE_FRAMES:
+        avg_framerate = int(np.average(fps))
+        write_video("frames.avi", imgs, avg_framerate)
+        write_video("depths.avi", depths, avg_framerate)
 
-    print(f"Average FPS: {np.average(fps)}")
+        print(f"Average FPS: {np.average(fps)}")
 
-    file = open("run.history", "wb")
-    pickle.dump({"fps": fps, "stats": stats}, file)
+    if STORE_STATS:
+        file = open("run.history", "wb")
+        pickle.dump({"fps": fps, "stats": stats}, file)
 
     jetson.close()
     cap.release()
@@ -127,7 +139,7 @@ def stream(sess):
 if __name__ == "__main__":
     print("Starting test script")
     # Add onnx model here
-    sess = onnxruntime.InferenceSession("mobile_diode_pano_ssim_l1_sobel_edges_old_preprocess.onnx", providers=['TensorrtExecutionProvider'])
+    sess = onnxruntime.InferenceSession(ONNX_MODEL, providers=['TensorrtExecutionProvider'])
     print("Model Session Loaded")
     stream(sess)
 
