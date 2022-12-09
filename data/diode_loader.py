@@ -50,7 +50,6 @@ def preprocess_depth(image, flip=False, shape=None, rand_shape=(0, 0), **kwargs)
         image = tf.image.flip_left_right(image)
 
     if shape:
-        # print(image.shape)
         random_height, random_width = rand_shape
         to_height = random_height + shape[0]
         to_width = random_width + shape[1]
@@ -70,16 +69,14 @@ def load_depth_image(depth_map, mask, **kwargs):
     max_depth = min(300, np.percentile(depth_map, 99))
 
     depth_map = np.clip(depth_map, MIN_VAL, max_depth)
-    depth_map = np.nan_to_num(depth_map, nan=0.5, posinf=max_depth, neginf=0.5)
-#     depth_map = np.log(depth_map + 1e-7, where=mask)
+    depth_map = np.log(depth_map + 1e-7, where=mask)
 
     depth_map = np.ma.masked_where(~mask, depth_map)
 
-    depth_map[depth_map < 0.5] = 0.5
-#     print(depth_map.min(), depth_map.max(), np.any(np.isnan(depth_map)))
-#     depth_map = np.clip(depth_map > 0, MIN_VAL, np.log(max_depth, where=max_depth > 0))
-    #     depth_map = cv2.resize(depth_map, IMG_SIZE)
+    depth_map = np.clip(depth_map, MIN_VAL, np.log(max_depth, where=max_depth > 0))
+#     depth_map = cv2.resize(depth_map, IMG_SIZE)
     depth_map = np.expand_dims(depth_map, axis=2)
+    depth_map = np.nan_to_num(depth_map, copy=False)
     depth_map = tf.image.convert_image_dtype(depth_map, tf.float32)
     return depth_map
 

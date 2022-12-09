@@ -48,12 +48,10 @@ def preprocess_depth(image, flip=False, shape=None, rand_shape=(0, 0), **kwargs)
         image = tf.image.flip_left_right(image)
 
     if shape:
-        # print(image.shape)
         random_height, random_width = rand_shape
         to_height = random_height + shape[0]
         to_width = random_width + shape[1]
         image = image[random_height:to_height, random_width:to_width, :]
-        # assert image.shape[0] == shape[0] and image.shape[1] == shape[1], f"Test - original size: {orig_shape} | image size: {image.shape} | expected shape: {shape} | random location: {rand_shape} - ({to_height}, {to_width})"
 
     if type(image) is np.ndarray:
         return image

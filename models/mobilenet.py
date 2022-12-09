@@ -37,11 +37,11 @@ def upsample(x, concat, out_channels, skip_process=True, alpha=0.2):
     if skip_process:
         concat = skip_connection_understanding(concat, out_channels // 4)
         concat = keras.layers.LeakyReLU(alpha=alpha)(concat) # leaky ReLU could be slower than using ReLU
-    x = keras.layers.LeakyReLU(alpha=alpha)(x)
     x = upsample_custom(x, out_channels, concat)
+    x = keras.layers.LeakyReLU(alpha=alpha)(x)
     return x
 
-def MobileNet(shape=(256, 512, 3), w_scene=True, w_skip=True):
+def MobileNet(shape=(256, 512, 3), w_scene=True, w_skip=False):
     base_model = keras.applications.MobileNetV2(
         include_top=False, weights="imagenet", input_shape=shape
     )
@@ -52,7 +52,6 @@ def MobileNet(shape=(256, 512, 3), w_scene=True, w_skip=True):
     x = base_model.get_layer("block_13_expand_relu").output
 
     names = [
-        "input_6",
         "block_1_expand_relu",
         "block_3_expand_relu",
         "block_6_expand_relu",
@@ -62,13 +61,8 @@ def MobileNet(shape=(256, 512, 3), w_scene=True, w_skip=True):
         x = keras.layers.Conv2D(filters=64, kernel_size=(1, 1), padding="same")(x)
         x = scene_understanding(x, 128)
 
-    # x = keras.layers.LeakyReLU(alpha=0.2)(x)
-    # x = upsample(x, 256, base_model.get_layer(names[0]).output)
-    # x = keras.layers.LeakyReLU(alpha=0.2)(x)
     x = upsample(x, base_model.get_layer(names[0]).output, 128, skip_process=w_skip)
-    # x = keras.layers.LeakyReLU(alpha=0.2)(x)
     x = upsample(x, base_model.get_layer(names[1]).output, 64, skip_process=w_skip)
-    # x = keras.layers.LeakyReLU(alpha=0.2)(x)
     x = upsample(x, base_model.get_layer(names[2]).output, 32, skip_process=w_skip)
     x = upsample(x, base_model.layers[0].output, 16, skip_process=w_skip)
     x = keras.layers.Conv2D(

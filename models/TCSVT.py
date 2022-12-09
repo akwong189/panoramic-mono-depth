@@ -319,7 +319,7 @@ class Scene_Understanding(keras.layers.Layer):
         self.aspp4 = GSAT(in_channel, out_channel // 4, dilation_factor=(2, 1))
 
         self.final = keras.layers.Conv2D(
-            out_channel * 2, kernel_size=(1, 1), padding="same"
+            out_channel, kernel_size=(1, 1), padding="same"
         )
 
     def get_config(self):

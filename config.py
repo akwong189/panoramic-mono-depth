@@ -4,30 +4,24 @@ import random
 import numpy as np
 import tensorflow as tf
 from tensorflow import keras
+import tensorflow_datasets as tfds
+
 import data.pano_loader as ploader
-from models.shufflenet import shufflenet
-from models.wnet import wnet
 import data.nyu_loader as nyl
 import data.kitti_loader as kloader
 import data.diode_loader as dloader
 import data.data as data
 import data.diode as diode_generator
-import tensorflow_datasets as tfds
 
-from models import efficientnet, mobilenet, optimizedmobilenet, vgg
-from utils import loss_function, accuracy_function, new_loss_function, new_new_loss
-from models.TCSVT import DownSampling, UpSampling, Scene_Understanding
+from options import custom_func, custom_models
 
 NYU_TFDS_LOAD = False
-DATASETS = ["pano", "kitti", "diode", "nyu"]
-
 
 def set_seed(seed):
     os.environ["PYTHONHASHSEED"] = f"{seed}"
     random.seed(seed)
     np.random.seed(seed)
     tf.random.set_seed(seed)
-
 
 class TrainConfig:
     def __init__(self, dataset, model, output, path, load):
@@ -46,37 +40,16 @@ class TrainConfig:
     def get_splits(self):
         raise NotImplemented("Calling from parent class and not child configuration")
 
-    def get_model(self):
+    def get_model(self, loss_function):
         if self.load:
-            custom_func = {
-                "loss_function": loss_function,
-                "accuracy_function": accuracy_function,
-                "DownSampling": DownSampling,
-                "UpSampling": UpSampling,
-                "Scene_Understanding": Scene_Understanding,
-                "new_loss_function": new_loss_function,
-                "new_new_loss": new_new_loss
-            }
+            custom_func["loss_function"] = loss_function
             model = keras.models.load_model(
                 self.load, custom_objects=custom_func
             )
             print("Model loaded properly")
             return model
 
-        if self.model == "efficient":
-            return efficientnet.EfficientUNet()
-        elif self.model == "mobile":
-            return mobilenet.MobileNet(self.shape)
-        elif self.model == "opt":
-            return optimizedmobilenet.OptimizedUNet(self.shape)
-        elif self.model == "scene":
-            return optimizedmobilenet.OptimizedUNet_Scene(self.shape)
-        elif self.model == "vgg":
-            return vgg.VGG(self.shape)
-        elif self.model == "shuffle":
-            # return shufflenet(self.shape)
-            # return shufflenet(shape=(224, 224, 3))
-            return wnet(self.shape)
+        return custom_models[self.model](self.shape)
 
     @staticmethod
     def gen_config(args):
@@ -141,8 +114,8 @@ class NYUConfig(TrainConfig):
         self.validation_steps = 654 // self.val_batch_size
 
     def nyu_labeled(self):
-        train = nyl.generate_nyu_dataframe("/data3/awong/data/nyu2_train.csv")
-        test = nyl.generate_nyu_dataframe("/data3/awong/data/nyu2_test.csv")
+        train = nyl.generate_nyu_dataframe("./splits/nyu2_train.csv")
+        test = nyl.generate_nyu_dataframe("./splits/nyu2_test.csv")
 
         train_generator = data.DataGenerator(
             train, batch_size=16, shuffle=True, is_nyu=True

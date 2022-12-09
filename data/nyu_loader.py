@@ -1,10 +1,7 @@
-import types
 import tensorflow as tf
 import numpy as np
 import cv2
-import os
 import pandas as pd
-from yaml import safe_load
 
 
 def preprocess_depth(depth, flip=False, swap=False, shift=0, wrap=0, **kwargs):
@@ -46,7 +43,6 @@ def preprocess_depth(depth, flip=False, swap=False, shift=0, wrap=0, **kwargs):
 
 def load_depth_image(filename, size=(256, 128), **kwargs):
     depth = cv2.imread(filename, 0)
-
     return depth
 
 
