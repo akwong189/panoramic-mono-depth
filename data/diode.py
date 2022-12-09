@@ -68,8 +68,8 @@ class DataGenerator(tf.keras.utils.Sequence):
         for img in images:
             image = dloader.load_color(img, flip=flip, rand_shape=random_shape)
             assert not np.any(np.isnan(image))
-            # image = image / 255.0
-            image = (image - image.min()) / (image.max() - image.min())
+            image = image / 255.0
+            # image = (image - image.min()) / (image.max() - image.min())
             result.append(image)
         return np.array(result)
 
