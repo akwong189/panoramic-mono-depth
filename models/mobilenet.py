@@ -1,6 +1,5 @@
 import tensorflow as tf
 from tensorflow import keras
-from utils import upsampling
 
 
 def scene_understanding(x, out_channels):

@@ -1,10 +1,10 @@
 import tensorflow as tf
 from tensorflow import keras
 import numpy as np
-import loader
-import nyu_loader as nyl
-import kitti_loader as kloader
-import diode_loader as dloader
+import data.pano_loader as ploader
+import data.nyu_loader as nyl
+import data.kitti_loader as kloader
+import data.diode_loader as dloader
 
 KITTI_SHAPE = (320, 1150)
 
@@ -67,7 +67,7 @@ class DataGenerator(keras.utils.Sequence):
             if self.datatype == "nyu":
                 image = nyl.load_color(img, flip=flip)
             elif self.datatype == "pano":
-                image = loader.load_color(img, flip=flip, shift=shift, wrap=self.wrap)
+                image = ploader.load_color(img, flip=flip, shift=shift, wrap=self.wrap)
             else:
                 image = kloader.load_color(img, flip=flip, rand_shape=random)
 
@@ -82,7 +82,7 @@ class DataGenerator(keras.utils.Sequence):
             if self.datatype == "nyu":
                 image = nyl.load_depth(img, flip=flip)
             elif self.datatype == "pano":
-                image = loader.load_depth(img, flip=flip, shift=shift, wrap=self.wrap)
+                image = ploader.load_depth(img, flip=flip, shift=shift, wrap=self.wrap)
             else:
                 image = kloader.load_depth(img, flip=flip, rand_shape=random)
             scaled_img = (image - image.min()) / (image.max() - image.min())

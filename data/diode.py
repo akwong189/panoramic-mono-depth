@@ -1,5 +1,5 @@
 import tensorflow as tf
-import diode_loader as dloader
+import data.diode_loader as dloader
 import numpy as np
 import logging
 
@@ -110,21 +110,3 @@ class DataGenerator(tf.keras.utils.Sequence):
             depth = (depth - depth.min()) / (depth.max() - depth.min())
 
         return image, depth
-
-    def data_generation(self, batch):
-
-        x = np.empty((self.batch_size, *self.out_shape, self.n_channels))
-        y = np.empty((self.batch_size, *self.out_shape, 1))
-
-        # for kitti
-
-        for i, batch_id in enumerate(batch):
-            x[i,], y[i,] = self.load(
-                self.data["images"][batch_id],
-                self.data["depth"][batch_id],
-                self.data["depth_mask"][batch_id],
-                flip,
-                (random_height, random_width),
-            )
-
-        return x, y

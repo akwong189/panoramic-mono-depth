@@ -58,7 +58,7 @@ def skip_connection_understanding(x, output_channels):
 
 def upsample(x, concat, out_channels, skip_process=True, alpha=0.2):
     if skip_process:
-        concat = skip_connection_understanding(concat, concat.shape[2])
+        concat = skip_connection_understanding(concat, out_channels // 4)
         concat = keras.layers.LeakyReLU(alpha=alpha)(concat) # leaky ReLU could be slower than using ReLU
     x = keras.layers.LeakyReLU(alpha=alpha)(x)
     x = upsample_custom(x, out_channels, concat)
@@ -68,9 +68,9 @@ def wnet(input_shape=(256, 640, 3), w_scene=True, w_skip=True):
     input_layer = keras.layers.Input(input_shape)
     x, skip_connections = shufflenet_encoder(input_layer=input_layer)
 
-    # x = keras.layers.Conv2D(512, 1, padding="same")(x)
     if w_scene:
-        x = scene_understanding(x, 256)
+        x = keras.layers.Conv2D(64, 1, padding="same")(x)
+        x = scene_understanding(x, 128)
 
     x = upsample(x, skip_connections[-2], 128, skip_process=w_skip)
     x = upsample(x, skip_connections[-3], 64, skip_process=w_skip)
