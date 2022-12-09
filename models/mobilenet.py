@@ -41,7 +41,7 @@ def upsample(x, concat, out_channels, skip_process=True, alpha=0.2):
     x = keras.layers.LeakyReLU(alpha=alpha)(x)
     return x
 
-def MobileNet(shape=(256, 512, 3), w_scene=True, w_skip=True):
+def MobileNet(shape=(256, 512, 3), w_scene=True, w_skip=False):
     base_model = keras.applications.MobileNetV2(
         include_top=False, weights="imagenet", input_shape=shape
     )
