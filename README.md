@@ -1,4 +1,4 @@
-# [Monocular Panoramic Depth Perception Model and Framework for micro-architectures](tbd) By Adley Wong
+# [Monocular Panoramic Depth Perception Model and Framework for micro-architectures](https://digitalcommons.calpoly.edu/theses/2630/) By Adley Wong
 
 ## Abstract
 
